@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VGM · Operation Visit All</title>
+<title>Volta Ghana Mission Database</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -178,6 +178,14 @@ body {
 
 /* ── ERROR / INFO TEXT ────────────────────────────────── */
 .err { color: var(--red); font-size: 12px; margin-top: 8px; min-height: 16px; }
+.ok-note { color: var(--green-txt); font-size: 12px; margin-top: 8px; }
+.link-btn {
+  display: block; width: 100%; margin-top: 10px; padding: 10px;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  color: var(--teal); text-align: center;
+}
+.link-btn:disabled { opacity: .55; cursor: not-allowed; }
 .info-note {
   font-size: 12px; color: var(--muted); font-style: italic;
   margin-bottom: 20px; line-height: 1.6;
@@ -418,8 +426,8 @@ body {
 <div id="screen-auth" class="screen hidden">
   <div class="app-head">
     <div class="app-head-mark">⛪</div>
-    <h1>Operation Visit All</h1>
-    <p>Volta Ghana Mission · Seventh-day Adventist Church</p>
+    <h1>Volta Ghana Mission Database</h1>
+    <p>Seventh-day Adventist Church</p>
   </div>
   <div class="card-body">
     <div class="tab-bar">
@@ -438,7 +446,9 @@ body {
         <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
       </div>
       <p class="err" id="l-err"></p>
+      <p class="ok-note" id="l-ok"></p>
       <button class="btn btn-primary" id="btn-login">Sign In</button>
+      <button type="button" class="link-btn" id="btn-forgot">Forgot password?</button>
     </div>
 
     <!-- REGISTER -->
@@ -520,7 +530,7 @@ body {
   <div class="bar">
     <div>
       <h2 id="d-greet">Welcome</h2>
-      <p>Operation Visit All · Volta Ghana Mission</p>
+      <p>Volta Ghana Mission Database</p>
     </div>
     <button class="btn-ghost" id="btn-so-dash">↩</button>
   </div>
@@ -528,7 +538,7 @@ body {
     <div class="access-card">
       <div class="icon">✅</div>
       <h3>Account Activated</h3>
-      <p>Your registration has been approved. You now have access to Operation Visit All features.</p>
+      <p>Your registration has been approved. You now have access to the Volta Ghana Mission Database.</p>
       <div class="tag-row">
         <span class="tag">👤 <span id="d-role">—</span></span>
         <span class="tag">📍 <span id="d-dist">—</span></span>
@@ -846,6 +856,33 @@ document.getElementById('btn-login').addEventListener('click', async () => {
       'auth/invalid-credential':'Email or password is incorrect.',
     };
     errEl.textContent = MSGS[e.code] || 'Sign-in failed. Try again.';
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// FORGOT PASSWORD — emails a reset link
+// ══════════════════════════════════════════════════════════
+document.getElementById('btn-forgot').addEventListener('click', async () => {
+  if (!auth) return;
+  const errEl = document.getElementById('l-err');
+  const okEl  = document.getElementById('l-ok');
+  errEl.textContent = '';
+  okEl.textContent = '';
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { errEl.textContent = 'Type your email above first, then tap Forgot password.'; return; }
+
+  loading(true);
+  try {
+    await auth.sendPasswordResetEmail(email);
+    loading(false);
+    okEl.textContent = 'If an account exists for ' + email + ', a reset link has been sent. Check your inbox and your spam folder.';
+  } catch (e) {
+    loading(false);
+    const MSGS = {
+      'auth/invalid-email':     'Invalid email address.',
+      'auth/too-many-requests': 'Too many attempts — please wait.',
+    };
+    errEl.textContent = MSGS[e.code] || 'Could not send the reset link. Try again.';
   }
 });
 
