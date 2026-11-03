@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGM · Operation Visit All</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- ═══════════════════════════════════════════════════════════
+     FIREBASE 10 COMPAT SDK  (compat = safe on mobile, no ESM)
+════════════════════════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<style>
+/* ── TOKENS ───────────────────────────────────────────── */
+:root {
+  --teal:       #0A7B6E;
+  --teal-dk:    #065548;
+  --teal-md:    #1A9B8A;
+  --teal-lt:    #E6F4F2;
+  --gold:       #C9972A;
+  --red:        #C0392B;
+  --red-lt:     #FDECEA;
+  --amber:      #FEF3CD;
+  --amber-txt:  #856404;
+  --green-lt:   #D1F2E8;
+  --green-txt:  #0D6B4E;
+  --text:       #132420;
+  --muted:      #527470;
+  --border:     #C4DBD8;
+  --bg:         #F2FAF8;
+  --card:       #FFFFFF;
+  --shadow:     0 2px 12px rgba(10,123,110,0.10);
+  --radius:     10px;
+  --radius-lg:  16px;
+  --font:       'Plus Jakarta Sans', -apple-system, sans-serif;
+}
+
+/* ── RESET ────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100dvh;
+}
+
+/* ── SCREENS ──────────────────────────────────────────── */
+.screen { min-height: 100dvh; display: flex; flex-direction: column; }
+.hidden { display: none !important; }
+
+/* ── APP HEADER (used on auth + pending screens) ─────── */
+.app-head {
+  background: linear-gradient(160deg, var(--teal-dk) 0%, var(--teal) 60%, var(--teal-md) 100%);
+  padding: 52px 24px 36px;
+  text-align: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+.app-head-mark {
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  margin: 0 auto 16px;
+}
+.app-head h1 {
+  font-size: 20px; font-weight: 800;
+  letter-spacing: -0.3px; color: #fff;
+  margin-bottom: 4px;
+}
+.app-head p { font-size: 12px; color: rgba(255,255,255,0.72); font-weight: 400; }
+
+/* ── CARD BODY ────────────────────────────────────────── */
+.card-body {
+  background: var(--card);
+  flex: 1;
+  padding: 0 20px 48px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── TABS ─────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.tab-btn {
+  flex: 1; padding: 14px 8px;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font); font-size: 14px; font-weight: 500;
+  color: var(--muted); position: relative;
+  transition: color .2s;
+}
+.tab-btn.active { color: var(--teal); font-weight: 700; }
+.tab-btn.active::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 2px; background: var(--teal); border-radius: 2px 2px 0 0;
+}
+
+/* ── FORM ELEMENTS ────────────────────────────────────── */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block; font-size: 11.5px; font-weight: 700;
+  color: var(--text); margin-bottom: 5px; letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%; padding: 11px 13px;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  font-family: var(--font); font-size: 14px; color: var(--text);
+  background: var(--card); outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  -webkit-appearance: none; appearance: none;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(10,123,110,.10);
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23527470' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  padding-right: 36px;
+}
+.field textarea { resize: vertical; min-height: 76px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 340px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ── BUTTONS ──────────────────────────────────────────── */
+.btn {
+  display: block; width: 100%; padding: 13px;
+  font-family: var(--font); font-size: 15px; font-weight: 700;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  transition: background .2s, transform .1s, opacity .2s;
+  text-align: center;
+}
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn-primary   { background: var(--teal);  color: #fff; margin-top: 6px; }
+.btn-primary:hover:not(:disabled) { background: var(--teal-dk); }
+.btn-danger    { background: var(--red);   color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #A93226; }
+.btn-outline {
+  background: transparent; color: var(--teal);
+  border: 1.5px solid var(--teal); padding: 11px;
+  font-size: 14px; font-weight: 600;
+}
+.btn-outline:hover { background: var(--teal-lt); }
+.btn-sm {
+  display: inline-block; width: auto;
+  padding: 8px 15px; font-size: 13px; font-weight: 600;
+  border-radius: 8px;
+}
+.btn-ghost {
+  background: rgba(255,255,255,0.18);
+  color: #fff; border: none;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; cursor: pointer;
+  transition: background .2s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.30); }
+
+/* ── ERROR / INFO TEXT ────────────────────────────────── */
+.err { color: var(--red); font-size: 12px; margin-top: 8px; min-height: 16px; }
+.info-note {
+  font-size: 12px; color: var(--muted); font-style: italic;
+  margin-bottom: 20px; line-height: 1.6;
+}
+
+/* ── STATUS BADGES ────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+}
+.badge-pending  { background: var(--amber);   color: var(--amber-txt); }
+.badge-approved { background: var(--green-lt); color: var(--green-txt); }
+.badge-rejected { background: var(--red-lt);  color: var(--red); }
+
+/* ── PENDING SCREEN ───────────────────────────────────── */
+#screen-pending {
+  background: var(--bg);
+  align-items: center; justify-content: center;
+  padding: 32px 20px;
+}
+.pending-box {
+  max-width: 400px; width: 100%; text-align: center;
+}
+.pending-anim { font-size: 60px; margin-bottom: 18px; animation: bob 2s ease-in-out infinite; }
+@keyframes bob {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+.pending-box h2 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.info-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  margin: 18px 0; text-align: left;
+}
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--bg); font-size: 13px;
+  gap: 12px;
+}
+.info-row:last-child { border-bottom: none; }
+.info-lbl { color: var(--muted); font-weight: 500; flex-shrink: 0; }
+.info-val { color: var(--text); font-weight: 600; text-align: right; }
+
+/* ── REJECTED SCREEN ──────────────────────────────────── */
+#screen-rejected {
+  background: var(--bg);
+  align-items: center; justify-content: center; padding: 32px 20px;
+}
+.rejected-box { max-width: 400px; width: 100%; text-align: center; }
+.rejected-icon { font-size: 60px; margin-bottom: 18px; }
+.rejected-reason {
+  background: var(--red-lt); border: 1px solid rgba(192,57,43,.2);
+  border-radius: var(--radius); padding: 14px 16px;
+  margin: 16px 0; font-size: 13px; color: var(--red);
+  text-align: left; line-height: 1.6;
+}
+
+/* ── DASHBOARD SCREEN ─────────────────────────────────── */
+#screen-dashboard { background: var(--bg); }
+.bar {
+  background: linear-gradient(135deg, var(--teal-dk), var(--teal));
+  padding: 48px 20px 22px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-shrink: 0;
+}
+.bar h2 { font-size: 19px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+.bar p  { font-size: 12px; color: rgba(255,255,255,.7); }
+.dash-body { padding: 20px; flex: 1; }
+.access-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 26px 20px; text-align: center;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.access-card .icon { font-size: 44px; margin-bottom: 10px; }
+.access-card h3 { color: var(--teal); font-size: 17px; margin-bottom: 6px; }
+.access-card p  { font-size: 13px; color: var(--muted); }
+.tag-row {
+  display: flex; gap: 8px; justify-content: center;
+  flex-wrap: wrap; margin-top: 16px;
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--teal-lt); border: 1px solid rgba(10,123,110,.18);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; color: var(--teal);
+}
+
+/* ── ADMIN SCREEN ─────────────────────────────────────── */
+#screen-admin { background: var(--bg); }
+.count-dot {
+  background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 10px; margin-left: 6px;
+  vertical-align: middle;
+}
+.admin-tabs {
+  display: flex;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  overflow-x: auto;
+}
+.a-tab {
+  padding: 13px 14px; background: none; cursor: pointer; white-space: nowrap;
+  font-family: var(--font); font-size: 14px; font-weight: 500;
+  color: var(--muted); border: none;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .2s;
+}
+.a-tab.active { color: var(--teal); font-weight: 700; border-bottom-color: var(--teal); }
+.panel { padding: 16px; overflow-y: auto; flex: 1; }
+
+/* Elders register */
+.el-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.el-stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.el-stat b { display: block; font-size: 22px; font-weight: 800; color: var(--teal); line-height: 1.15; }
+.el-stat span { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.el-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.el-actions .btn { flex: 1; margin-top: 0; }
+.el-count { font-size: 12px; color: var(--muted); margin: 2px 0 4px; }
+.el-group {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--teal-dk); margin: 18px 0 8px;
+}
+.el-group span { background: var(--teal-lt); border-radius: 10px; padding: 1px 9px; font-size: 11px; }
+.el-row {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
+}
+.el-row:active, .el-row:focus-visible { background: var(--teal-lt); outline: none; }
+.el-row .n { font-weight: 700; font-size: 15px; }
+.el-row .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.modal.tall { max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; }
+.dl-sec { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--teal); margin: 16px 0 4px; }
+.dl-row { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--bg); font-size: 13px; }
+.dl-row .k { color: var(--muted); flex-shrink: 0; }
+.dl-row .v { font-weight: 600; text-align: right; word-break: break-word; }
+.dl-row .v a { color: var(--teal); }
+
+/* User card in admin */
+.u-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 15px;
+  margin-bottom: 10px; transition: box-shadow .2s;
+}
+.u-card:hover { box-shadow: var(--shadow); }
+.u-card-top {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 10px;
+}
+.u-name { font-size: 15px; font-weight: 700; }
+.u-email { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.u-meta {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 12px;
+}
+.u-meta-item { font-size: 12px; }
+.u-meta-lbl { color: var(--muted); display: block; margin-bottom: 1px; }
+.u-meta-val { color: var(--text); font-weight: 600; }
+.u-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.empty {
+  text-align: center; padding: 48px 20px;
+}
+.empty .e-icon { font-size: 44px; margin-bottom: 10px; }
+.empty h3 { font-size: 16px; margin-bottom: 4px; }
+
+/* ── MODAL ────────────────────────────────────────────── */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 900;
+}
+.modal {
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 20px 44px;
+  width: 100%; max-width: 480px;
+  animation: slideUp .28s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.modal-handle {
+  width: 38px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 10px auto 18px;
+}
+.modal h3 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.modal .sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.modal-actions .btn-outline { flex: 1; }
+.modal-actions .btn-primary,
+.modal-actions .btn-danger  { flex: 2; margin-top: 0; }
+
+/* ── TOAST ────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  padding: 11px 22px; border-radius: 24px;
+  background: var(--text); color: #fff;
+  font-size: 13px; font-weight: 600;
+  z-index: 9999; white-space: nowrap;
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  max-width: 90vw; text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.ok  { background: var(--teal); }
+.toast.err { background: var(--red);  }
+
+/* ── LOADING ──────────────────────────────────────────── */
+#loader {
+  position: fixed; inset: 0;
+  background: rgba(255,255,255,.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 800;
+}
+.spinner {
+  width: 38px; height: 38px;
+  border: 3px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ── LOADING OVERLAY ─────────────────────────────── -->
+<div id="loader"><div class="spinner"></div></div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 1 · AUTH (Login / Register)
+══════════════════════════════════════════════════════ -->
+<div id="screen-auth" class="screen hidden">
+  <div class="app-head">
+    <div class="app-head-mark">⛪</div>
+    <h1>Operation Visit All</h1>
+    <p>Volta Ghana Mission · Seventh-day Adventist Church</p>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tb-login">Sign In</button>
+      <button class="tab-btn"        id="tb-reg">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="fp-login">
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="l-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <p class="err" id="l-err"></p>
+      <button class="btn btn-primary" id="btn-login">Sign In</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="fp-reg" class="hidden">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="r-name" placeholder="e.g. John Mensah" autocomplete="name">
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="r-email" placeholder="your@email.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="r-phone" placeholder="+233..." autocomplete="tel">
+        </div>
+      </div>
+      <div class="field">
+        <label>Your District</label>
+        <select id="r-district"></select>
+      </div>
+      <div class="field">
+        <label>Registering As</label>
+        <select id="r-role-req">
+          <option value="team_member">Visitation Team Member</option>
+          <option value="team_leader">Team Leader</option>
+          <option value="district_pastor">District Pastor</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="r-pass" placeholder="Min. 6 chars" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>Confirm Password</label>
+          <input type="password" id="r-conf" placeholder="Repeat" autocomplete="new-password">
+        </div>
+      </div>
+      <p class="err" id="r-err"></p>
+      <button class="btn btn-primary" id="btn-reg">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 2 · PENDING APPROVAL
+══════════════════════════════════════════════════════ -->
+<div id="screen-pending" class="screen hidden">
+  <div class="pending-box">
+    <div class="pending-anim">⏳</div>
+    <h2>Registration Submitted</h2>
+    <p class="info-note">Your account is awaiting approval from your District Pastor.<br>You will be redirected automatically once approved.</p>
+    <div class="info-card" id="pending-info"></div>
+    <p class="info-note">Not approved after 24 hours? Contact your District Pastor directly.</p>
+    <button class="btn btn-outline" id="btn-so-pending">Sign Out</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 3 · REJECTED
+══════════════════════════════════════════════════════ -->
+<div id="screen-rejected" class="screen hidden">
+  <div class="rejected-box">
+    <div class="rejected-icon">❌</div>
+    <h2>Registration Rejected</h2>
+    <p class="info-note">Your registration was not approved by your District Pastor.</p>
+    <div class="rejected-reason" id="reject-reason-display"></div>
+    <p class="info-note" style="margin-top:12px;">You may sign out and re-register with correct information, or contact your District Pastor for clarification.</p>
+    <button class="btn btn-outline" id="btn-so-rejected">Sign Out</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 4 · DASHBOARD (approved members)
+══════════════════════════════════════════════════════ -->
+<div id="screen-dashboard" class="screen hidden">
+  <div class="bar">
+    <div>
+      <h2 id="d-greet">Welcome</h2>
+      <p>Operation Visit All · Volta Ghana Mission</p>
+    </div>
+    <button class="btn-ghost" id="btn-so-dash">↩</button>
+  </div>
+  <div class="dash-body">
+    <div class="access-card">
+      <div class="icon">✅</div>
+      <h3>Account Activated</h3>
+      <p>Your registration has been approved. You now have access to Operation Visit All features.</p>
+      <div class="tag-row">
+        <span class="tag">👤 <span id="d-role">—</span></span>
+        <span class="tag">📍 <span id="d-dist">—</span></span>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--muted);">Visitation features will appear here as they are activated by the Mission.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 5 · ADMIN (District Pastor / Mission Admin)
+══════════════════════════════════════════════════════ -->
+<div id="screen-admin" class="screen hidden">
+  <div class="bar">
+    <div>
+      <h2 id="a-title">Admin Panel</h2>
+      <p id="a-sub">Approval Dashboard</p>
+    </div>
+    <button class="btn-ghost" id="btn-so-admin">↩</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="a-tab active" id="at-pending">
+      Pending <span class="count-dot hidden" id="pcount">0</span>
+    </button>
+    <button class="a-tab" id="at-all">All Users</button>
+    <button class="a-tab" id="at-elders">Elders</button>
+  </div>
+  <div class="panel" id="panel-pending"><div id="pending-list"></div></div>
+  <div class="panel hidden" id="panel-all"><div id="all-list"></div></div>
+  <div class="panel hidden" id="panel-elders">
+    <div class="el-stats" id="el-stats"></div>
+    <div class="field">
+      <input type="search" id="el-search" placeholder="Search name, church, phone or reference" autocomplete="off">
+    </div>
+    <div class="field" id="el-dist-wrap">
+      <select id="el-district" aria-label="Filter by district"></select>
+    </div>
+    <div class="el-actions">
+      <button class="btn btn-outline btn-sm" id="el-copy">Copy form link</button>
+      <button class="btn btn-primary btn-sm" id="el-export">Export CSV</button>
+    </div>
+    <p class="el-count" id="el-count"></p>
+    <div id="el-list"></div>
+  </div>
+</div>
+
+<!-- MODAL · ELDER DETAIL -->
+<div id="mod-elder" class="modal-bg hidden">
+  <div class="modal tall">
+    <div class="modal-handle"></div>
+    <h3 id="mod-e-name">Elder</h3>
+    <p class="sub" id="mod-e-sub"></p>
+    <div id="mod-e-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" id="mod-e-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL · APPROVE
+══════════════════════════════════════════════════════ -->
+<div id="mod-approve" class="modal-bg hidden">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>Approve Registration</h3>
+    <p class="sub" id="mod-a-desc">Assign role and district.</p>
+    <div class="field">
+      <label>Assign Role</label>
+      <select id="mod-a-role">
+        <option value="team_member">Team Member</option>
+        <option value="team_leader">Team Leader</option>
+        <option value="district_pastor">District Pastor</option>
+        <option value="mission_admin">Mission Admin</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Assign District</label>
+      <select id="mod-a-dist"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" id="mod-a-cancel">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="mod-a-confirm">✓ Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL · REJECT
+══════════════════════════════════════════════════════ -->
+<div id="mod-reject" class="modal-bg hidden">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>Reject Registration</h3>
+    <p class="sub" id="mod-r-desc">The user will see this reason in their app.</p>
+    <div class="field">
+      <label>Reason (optional)</label>
+      <textarea id="mod-r-reason" placeholder="e.g. Please re-register and select the correct district."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" id="mod-r-cancel">Cancel</button>
+      <button class="btn btn-danger btn-sm"  id="mod-r-confirm">✗ Reject</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════ -->
+<script>
+// Firebase settings live in firebase-config.js (shared with elders.html).
+const FB_CONFIG = window.VGM_FIREBASE_CONFIG || {};
+const FB_READY  = !!FB_CONFIG.apiKey;
+let auth = null, db = null;
+if (FB_READY) {
+  firebase.initializeApp(FB_CONFIG);
+  auth = firebase.auth();
+  db   = firebase.firestore();
+}
+
+// ── VGM DISTRICTS ──────────────────────────────────────────
+const DISTRICTS = [
+  { id: 'peki',       name: 'Peki District' },
+  { id: 'hohoe',      name: 'Hohoe District' },
+  { id: 'kpando',     name: 'Kpando District' },
+  { id: 'ho_central', name: 'Ho Central District' },
+  { id: 'ho_west',    name: 'Ho West District' },
+  { id: 'jasikan',    name: 'Jasikan District' },
+  { id: 'keta',       name: 'Keta District' },
+  { id: 'sogakope',   name: 'Sogakope District' },
+  { id: 'aflao',      name: 'Aflao District' },
+  { id: 'denu',       name: 'Denu District' },
+];
+
+const ROLE_LABELS = {
+  mission_admin:   'Mission Admin',
+  district_pastor: 'District Pastor',
+  team_leader:     'Team Leader',
+  team_member:     'Team Member',
+};
+
+const dName = id => DISTRICTS.find(d => d.id === id)?.name || id || '—';
+const rName = r  => ROLE_LABELS[r] || r || '—';
+
+// ── POPULATE SELECTS ───────────────────────────────────────
+function fillDistrictSelect(id) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">-- Select District --</option>';
+  DISTRICTS.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.id; o.textContent = d.name;
+    sel.appendChild(o);
+  });
+}
+fillDistrictSelect('r-district');
+fillDistrictSelect('mod-a-dist');
+
+// ── SCREEN MANAGER ─────────────────────────────────────────
+const SCREENS = ['auth','pending','rejected','dashboard','admin'];
+function show(id) {
+  SCREENS.forEach(s =>
+    document.getElementById('screen-' + s).classList.add('hidden')
+  );
+  document.getElementById('screen-' + id).classList.remove('hidden');
+}
+
+// ── LOADER ─────────────────────────────────────────────────
+const loader = document.getElementById('loader');
+function loading(on) { loader.classList.toggle('hidden', !on); }
+
+// ── TOAST ──────────────────────────────────────────────────
+function toast(msg, type = '') {
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 300);
+  }, 3200);
+}
+
+// ── ACTIVE LISTENERS (cleanup) ─────────────────────────────
+let _subs = [];
+let _eldersUnsub = null;
+let _elders = [];
+function clearSubs() {
+  _subs.forEach(fn => { try { fn(); } catch(_){} });
+  _subs = [];
+  _eldersUnsub = null;
+  _elders = [];
+}
+
+// ── PENDING MODAL UIDS ─────────────────────────────────────
+let _approveUid = null;
+let _rejectUid  = null;
+
+// ── CURRENT ADMIN DATA ─────────────────────────────────────
+let _adminData = null;
+
+// ── ESCAPE ─────────────────────────────────────────────────
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s || '');
+  return d.innerHTML;
+}
+
+// ── DATE FORMAT ────────────────────────────────────────────
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// ══════════════════════════════════════════════════════════
+// AUTH STATE — THE CENTRAL ROUTER
+// ══════════════════════════════════════════════════════════
+function notConfigured() {
+  loading(false);
+  show('auth');
+  document.getElementById('l-err').textContent =
+    'Firebase is not set up yet. Fill in firebase-config.js and reload.';
+  document.getElementById('btn-login').disabled = true;
+  document.getElementById('btn-reg').disabled = true;
+}
+
+function onUser(user) {
+  clearSubs();
+  loading(false);
+
+  if (!user) { show('auth'); return; }
+
+  // Watch own user doc in real-time so approval auto-redirects
+  const unsub = db.collection('users').doc(user.uid)
+    .onSnapshot(snap => {
+      if (!snap.exists) { auth.signOut(); return; }
+      const data = { uid: user.uid, ...snap.data() };
+
+      if (data.status === 'rejected') {
+        renderRejected(data); show('rejected');
+
+      } else if (data.status === 'approved') {
+        const isAdmin = data.role === 'mission_admin' || data.role === 'district_pastor';
+        if (isAdmin) { renderAdmin(data); show('admin'); }
+        else         { renderDashboard(data); show('dashboard'); }
+
+      } else {
+        renderPending(data); show('pending');
+      }
+    }, err => {
+      console.error(err);
+      toast('Connection error — please refresh.', 'err');
+    });
+
+  _subs.push(unsub);
+}
+
+if (FB_READY) { auth.onAuthStateChanged(onUser); } else { notConfigured(); }
+
+// ══════════════════════════════════════════════════════════
+// SIGN OUT
+// ══════════════════════════════════════════════════════════
+function signOut() { clearSubs(); auth.signOut(); }
+
+document.getElementById('btn-so-pending') .addEventListener('click', signOut);
+document.getElementById('btn-so-rejected').addEventListener('click', signOut);
+document.getElementById('btn-so-dash')    .addEventListener('click', signOut);
+document.getElementById('btn-so-admin')   .addEventListener('click', signOut);
+
+// ══════════════════════════════════════════════════════════
+// AUTH TABS
+// ══════════════════════════════════════════════════════════
+document.getElementById('tb-login').addEventListener('click', () => {
+  document.getElementById('tb-login').classList.add('active');
+  document.getElementById('tb-reg').classList.remove('active');
+  document.getElementById('fp-login').classList.remove('hidden');
+  document.getElementById('fp-reg').classList.add('hidden');
+  document.getElementById('l-err').textContent = '';
+});
+
+document.getElementById('tb-reg').addEventListener('click', () => {
+  document.getElementById('tb-reg').classList.add('active');
+  document.getElementById('tb-login').classList.remove('active');
+  document.getElementById('fp-reg').classList.remove('hidden');
+  document.getElementById('fp-login').classList.add('hidden');
+  document.getElementById('r-err').textContent = '';
+});
+
+// ── Enter key on password ─────────────────────────────────
+document.getElementById('l-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-login').click();
+});
+
+// ══════════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════════
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const errEl = document.getElementById('l-err');
+  errEl.textContent = '';
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  if (!email || !pass) { errEl.textContent = 'Enter your email and password.'; return; }
+
+  loading(true);
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (e) {
+    loading(false);
+    const MSGS = {
+      'auth/user-not-found':    'No account found with this email.',
+      'auth/wrong-password':    'Incorrect password.',
+      'auth/invalid-email':     'Invalid email address.',
+      'auth/too-many-requests': 'Too many attempts — please wait.',
+      'auth/invalid-credential':'Email or password is incorrect.',
+    };
+    errEl.textContent = MSGS[e.code] || 'Sign-in failed. Try again.';
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// REGISTER
+// ══════════════════════════════════════════════════════════
+document.getElementById('btn-reg').addEventListener('click', async () => {
+  const errEl = document.getElementById('r-err');
+  errEl.textContent = '';
+
+  const name    = document.getElementById('r-name').value.trim();
+  const email   = document.getElementById('r-email').value.trim();
+  const phone   = document.getElementById('r-phone').value.trim();
+  const dist    = document.getElementById('r-district').value;
+  const roleReq = document.getElementById('r-role-req').value;
+  const pass    = document.getElementById('r-pass').value;
+  const conf    = document.getElementById('r-conf').value;
+
+  if (!name)          { errEl.textContent = 'Enter your full name.'; return; }
+  if (!email)         { errEl.textContent = 'Enter your email address.'; return; }
+  if (!phone)         { errEl.textContent = 'Enter your phone number.'; return; }
+  if (!dist)          { errEl.textContent = 'Select your district.'; return; }
+  if (!pass)          { errEl.textContent = 'Create a password.'; return; }
+  if (pass.length<6)  { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pass !== conf)  { errEl.textContent = 'Passwords do not match.'; return; }
+
+  loading(true);
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await db.collection('users').doc(cred.user.uid).set({
+      uid:             cred.user.uid,
+      displayName:     name,
+      email:           email,
+      phone:           phone,
+      districtId:      dist,
+      roleRequested:   roleReq,
+      role:            'team_member',   // overwritten on approval
+      approved:        false,
+      status:          'pending',
+      createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
+      processedAt:     null,
+      processedBy:     null,
+      rejectionReason: null,
+    });
+    // auth.onAuthStateChanged picks up and routes to pending screen
+  } catch (e) {
+    loading(false);
+    const MSGS = {
+      'auth/email-already-in-use': 'An account with this email already exists — please sign in.',
+      'auth/invalid-email':        'Invalid email address.',
+      'auth/weak-password':        'Password is too weak.',
+    };
+    errEl.textContent = MSGS[e.code] || 'Registration failed. Try again.';
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// PENDING SCREEN
+// ══════════════════════════════════════════════════════════
+function renderPending(data) {
+  const box = document.getElementById('pending-info');
+  box.innerHTML = '';
+  [
+    ['Name',           esc(data.displayName || '—')],
+    ['Email',          esc(data.email || '—')],
+    ['Phone',          esc(data.phone || '—')],
+    ['District',       esc(dName(data.districtId))],
+    ['Requested Role', esc(rName(data.roleRequested))],
+    ['Status',         '<span class="badge badge-pending">⏳ Awaiting Approval</span>'],
+  ].forEach(([l, v]) => {
+    const row = document.createElement('div');
+    row.className = 'info-row';
+    row.innerHTML = `<span class="info-lbl">${l}</span><span class="info-val">${v}</span>`;
+    box.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// REJECTED SCREEN
+// ══════════════════════════════════════════════════════════
+function renderRejected(data) {
+  document.getElementById('reject-reason-display').textContent =
+    data.rejectionReason
+      ? 'Reason: ' + data.rejectionReason
+      : 'No reason was provided. Contact your District Pastor for clarification.';
+}
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD SCREEN
+// ══════════════════════════════════════════════════════════
+function renderDashboard(data) {
+  document.getElementById('d-greet').textContent =
+    'Welcome, ' + (data.displayName?.split(' ')[0] || 'Member') + '!';
+  document.getElementById('d-role').textContent = rName(data.role);
+  document.getElementById('d-dist').textContent = dName(data.districtId);
+}
+
+// ══════════════════════════════════════════════════════════
+// ADMIN SCREEN
+// ══════════════════════════════════════════════════════════
+function renderAdmin(data) {
+  _adminData = data;
+  document.getElementById('a-title').textContent =
+    data.role === 'mission_admin' ? 'Mission Admin Panel' : 'District Pastor Panel';
+  document.getElementById('a-sub').textContent =
+    (data.displayName || '') + ' · ' + dName(data.districtId);
+
+  // Real-time listener for pending users
+  let q = db.collection('users').where('status', '==', 'pending');
+  // District pastors see only their district
+  // NOTE: This compound query needs a Firestore composite index on
+  // (status ASC, districtId ASC) — Firebase Console will show a link
+  // to create it automatically on first run.
+  if (data.role === 'district_pastor') {
+    q = q.where('districtId', '==', data.districtId);
+  }
+
+  const unsub = q.onSnapshot(snap => {
+    const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    buildPendingList(users);
+    const dot = document.getElementById('pcount');
+    if (users.length > 0) {
+      dot.textContent = users.length;
+      dot.classList.remove('hidden');
+    } else {
+      dot.classList.add('hidden');
+    }
+  });
+  _subs.push(unsub);
+}
+
+// ── Pending list ───────────────────────────────────────────
+function buildPendingList(users) {
+  const list = document.getElementById('pending-list');
+  list.innerHTML = '';
+
+  if (users.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">🎉</div><h3>No Pending Registrations</h3><p>All registrations have been processed.</p></div>`;
+    return;
+  }
+
+  users.forEach(u => {
+    const card = document.createElement('div');
+    card.className = 'u-card';
+
+    // Top row
+    const top = document.createElement('div');
+    top.className = 'u-card-top';
+    const info = document.createElement('div');
+    info.innerHTML = `<div class="u-name">${esc(u.displayName)}</div><div class="u-email">${esc(u.email)}</div>`;
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-pending';
+    badge.textContent = 'Pending';
+    top.appendChild(info);
+    top.appendChild(badge);
+
+    // Meta grid
+    const meta = document.createElement('div');
+    meta.className = 'u-meta';
+    meta.innerHTML = `
+      <div class="u-meta-item"><span class="u-meta-lbl">Phone</span><span class="u-meta-val">${esc(u.phone||'—')}</span></div>
+      <div class="u-meta-item"><span class="u-meta-lbl">District</span><span class="u-meta-val">${esc(dName(u.districtId))}</span></div>
+      <div class="u-meta-item"><span class="u-meta-lbl">Requested Role</span><span class="u-meta-val">${esc(rName(u.roleRequested))}</span></div>
+      <div class="u-meta-item"><span class="u-meta-lbl">Registered</span><span class="u-meta-val">${fmtDate(u.createdAt)}</span></div>
+    `;
+
+    // Actions
+    const acts = document.createElement('div');
+    acts.className = 'u-actions';
+
+    const rBtn = document.createElement('button');
+    rBtn.className = 'btn btn-outline btn-sm';
+    rBtn.style.color = 'var(--red)';
+    rBtn.style.borderColor = 'var(--red)';
+    rBtn.textContent = '✗ Reject';
+    rBtn.addEventListener('click', () => openRejectModal(u));
+
+    const aBtn = document.createElement('button');
+    aBtn.className = 'btn btn-primary btn-sm';
+    aBtn.textContent = '✓ Approve';
+    aBtn.addEventListener('click', () => openApproveModal(u));
+
+    acts.appendChild(rBtn);
+    acts.appendChild(aBtn);
+
+    card.appendChild(top);
+    card.appendChild(meta);
+    card.appendChild(acts);
+    list.appendChild(card);
+  });
+}
+
+// ── All users tab ──────────────────────────────────────────
+async function loadAllUsers() {
+  const list = document.getElementById('all-list');
+  list.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)">Loading…</div>';
+
+  try {
+    let q = db.collection('users').orderBy('createdAt', 'desc');
+    if (_adminData?.role === 'district_pastor') {
+      q = db.collection('users')
+        .where('districtId', '==', _adminData.districtId)
+        .orderBy('createdAt', 'desc');
+    }
+    const snap = await q.get();
+    const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+
+    list.innerHTML = '';
+    if (users.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="e-icon">👥</div><h3>No users yet</h3><p>No registrations have been submitted.</p></div>`;
+      return;
+    }
+
+    users.forEach(u => {
+      const sc  = { approved:'badge-approved', pending:'badge-pending', rejected:'badge-rejected' }[u.status] || 'badge-pending';
+      const stx = { approved:'✓ Approved', pending:'⏳ Pending', rejected:'✗ Rejected' }[u.status] || 'Pending';
+
+      const card = document.createElement('div');
+      card.className = 'u-card';
+      card.innerHTML = `
+        <div class="u-card-top">
+          <div>
+            <div class="u-name">${esc(u.displayName||'—')}</div>
+            <div class="u-email">${esc(u.email||'—')}</div>
+          </div>
+          <span class="badge ${sc}">${stx}</span>
+        </div>
+        <div class="u-meta">
+          <div class="u-meta-item"><span class="u-meta-lbl">Role</span><span class="u-meta-val">${esc(rName(u.role))}</span></div>
+          <div class="u-meta-item"><span class="u-meta-lbl">District</span><span class="u-meta-val">${esc(dName(u.districtId))}</span></div>
+          <div class="u-meta-item"><span class="u-meta-lbl">Phone</span><span class="u-meta-val">${esc(u.phone||'—')}</span></div>
+          <div class="u-meta-item"><span class="u-meta-lbl">Joined</span><span class="u-meta-val">${fmtDate(u.createdAt)}</span></div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  } catch (e) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">⚠️</div><h3>Could not load users</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+// ── Admin tab switching ────────────────────────────────────
+function adminTab(name) {
+  ['pending', 'all', 'elders'].forEach(n => {
+    document.getElementById('at-' + n).classList.toggle('active', n === name);
+    document.getElementById('panel-' + n).classList.toggle('hidden', n !== name);
+  });
+  if (name === 'all') loadAllUsers();
+  if (name === 'elders') startElders();
+}
+['pending', 'all', 'elders'].forEach(n =>
+  document.getElementById('at-' + n).addEventListener('click', () => adminTab(n))
+);
+
+// ══════════════════════════════════════════════════════════
+// ELDERS REGISTER
+// Mission admin: every district, grouped. District pastor: own district only.
+// Records come from elders.html (collection: elders_biodata).
+// ══════════════════════════════════════════════════════════
+const ELDERS_COLLECTION = 'elders_biodata';
+const OTHER_KEY = '__other';
+
+// [label, field, kind]  (kind: tel, mail, date)
+const EL_SECTIONS = [
+  ['Personal', [['Gender','gender'],['Date of birth','dateOfBirth'],['Hometown','hometown'],['Residence','residence']]],
+  ['Church', [['District','district'],['Church','church']]],
+  ['Contact', [['Phone','phone','tel'],['WhatsApp','whatsapp','tel'],['Email','email','mail']]],
+  ['Family', [['Marital status','maritalStatus'],['Spouse','spouseName'],['Spouse contact','spouseContact','tel'],['Children','childrenCount']]],
+  ['Ordination', [['Date','ordinationDate'],['Place','ordinationPlace'],['Ordained by','ordainedBy']]],
+  ["Latest elders' training", [['Date','trainingDate'],['Workshop','trainingTitle'],['Organised by','trainingOrganiser']]],
+  ['Positions held', [['Positions','positions'],['Other positions','positionsOther']]],
+  ['Next of kin', [['Name','nextOfKinName'],['Relationship','nextOfKinRelationship'],['Phone','nextOfKinPhone','tel'],['Address','nextOfKinAddress']]],
+  ['Education and work', [['Education','educationLevel'],['Programme or institution','educationDetail'],['Occupation','occupation'],['Place of work','employer']]],
+  ['Other', [['Other information','otherInfo']]],
+  ['Record', [['Reference','refNo'],['Submitted','submittedAt','date']]],
+];
+
+function elVal(e, field) {
+  const v = e[field];
+  if (Array.isArray(v)) return v.join(', ');
+  if (v === null || v === undefined) return '';
+  return String(v).trim();
+}
+
+function elGroupKey(e) {
+  return DISTRICTS.some(d => d.id === e.districtKey) ? e.districtKey : OTHER_KEY;
+}
+
+function elTime(e) {
+  const t = e.submittedAt;
+  if (!t) return 0;
+  return (t.toDate ? t.toDate() : new Date(t)).getTime();
+}
+
+function startElders() {
+  if (!_adminData) return;
+  const isAdmin = _adminData.role === 'mission_admin';
+  document.getElementById('el-dist-wrap').classList.toggle('hidden', !isAdmin);
+  if (_eldersUnsub) { renderElders(); return; }
+
+  document.getElementById('el-list').innerHTML =
+    '<div style="padding:32px;text-align:center;color:var(--muted)">Loading…</div>';
+
+  let q = db.collection(ELDERS_COLLECTION);
+  // A district pastor's query must match the security rule, so it is filtered by district.
+  if (!isAdmin) q = q.where('districtKey', '==', _adminData.districtId);
+
+  _eldersUnsub = q.onSnapshot(snap => {
+    _elders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderElders();
+  }, err => {
+    _eldersUnsub = null;
+    document.getElementById('el-list').innerHTML =
+      `<div class="empty"><div class="e-icon">⚠️</div><h3>Could not load elders</h3><p>${esc(err.message)}</p></div>`;
+  });
+  _subs.push(_eldersUnsub);
+}
+
+function elFiltered() {
+  const term = document.getElementById('el-search').value.trim().toLowerCase();
+  const digits = term.replace(/\D/g, '');
+  const dist = document.getElementById('el-district').value;
+  return _elders.filter(e => {
+    if (dist && elGroupKey(e) !== dist) return false;
+    if (!term) return true;
+    const text = [e.fullName, e.church, e.district, e.phone, e.whatsapp, e.hometown, e.refNo]
+      .some(x => String(x || '').toLowerCase().includes(term));
+    const phone = digits.length >= 3 &&
+      [e.phone, e.whatsapp].some(p => String(p || '').replace(/\D/g, '').includes(digits));
+    return text || phone;
+  });
+}
+
+function renderElders() {
+  const isAdmin = _adminData && _adminData.role === 'mission_admin';
+
+  // Stats (always for everything this user can see)
+  const week = Date.now() - 7 * 24 * 3600 * 1000;
+  const reporting = new Set(_elders.map(elGroupKey)).size;
+  const tiles = [['Elders', _elders.length]];
+  if (isAdmin) tiles.push(['Districts', reporting]);
+  tiles.push(['Last 7 days', _elders.filter(e => elTime(e) >= week).length]);
+  document.getElementById('el-stats').innerHTML =
+    tiles.map(([l, n]) => `<div class="el-stat"><b>${n}</b><span>${esc(l)}</span></div>`).join('');
+
+  // District filter (admin) — rebuilt each time, keeps the current choice
+  if (isAdmin) {
+    const sel = document.getElementById('el-district');
+    const keep = sel.value;
+    const counts = {};
+    _elders.forEach(e => { const k = elGroupKey(e); counts[k] = (counts[k] || 0) + 1; });
+    let opts = `<option value="">All districts (${_elders.length})</option>`;
+    DISTRICTS.forEach(d => { opts += `<option value="${d.id}">${esc(d.name)} (${counts[d.id] || 0})</option>`; });
+    if (counts[OTHER_KEY]) opts += `<option value="${OTHER_KEY}">Other / not matched (${counts[OTHER_KEY]})</option>`;
+    sel.innerHTML = opts;
+    sel.value = keep;
+    if (sel.value !== keep) sel.value = '';
+  }
+
+  const rows = elFiltered();
+  document.getElementById('el-count').textContent =
+    rows.length === _elders.length
+      ? ''
+      : `Showing ${rows.length} of ${_elders.length}`;
+
+  const list = document.getElementById('el-list');
+  if (_elders.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">📋</div><h3>No elder forms yet</h3><p>Tap “Copy form link” and send it to the elders.</p></div>`;
+    return;
+  }
+  if (rows.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">🔍</div><h3>No match</h3><p>Try a different name, church or district.</p></div>`;
+    return;
+  }
+
+  const groups = {};
+  rows.forEach(e => { (groups[elGroupKey(e)] = groups[elGroupKey(e)] || []).push(e); });
+  const order = DISTRICTS.map(d => d.id).concat(OTHER_KEY).filter(k => groups[k]);
+
+  list.innerHTML = order.map(k => {
+    const label = k === OTHER_KEY ? 'Other / not matched' : dName(k);
+    const items = groups[k].sort((a, b) => elVal(a, 'fullName').localeCompare(elVal(b, 'fullName')));
+    return `<div class="el-group">${esc(label)} <span>${items.length}</span></div>` +
+      items.map(e => {
+        const sub = [elVal(e, 'church'), k === OTHER_KEY ? elVal(e, 'district') : '', elVal(e, 'phone')]
+          .filter(Boolean).join(' · ');
+        return `<div class="el-row" role="button" tabindex="0" data-id="${esc(e.id)}">
+          <div class="n">${esc(elVal(e, 'fullName') || '—')}</div>
+          <div class="s">${esc(sub || '—')}</div>
+        </div>`;
+      }).join('');
+  }).join('');
+}
+
+// ── Detail sheet ───────────────────────────────────────────
+function openElder(id) {
+  const e = _elders.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('mod-e-name').textContent = elVal(e, 'fullName') || 'Elder';
+  document.getElementById('mod-e-sub').textContent =
+    [elVal(e, 'church'), elVal(e, 'district')].filter(Boolean).join(' · ');
+
+  let html = '';
+  EL_SECTIONS.forEach(([title, fields]) => {
+    const rows = fields.map(([label, field, kind]) => {
+      let v = field === 'submittedAt' ? fmtDate(e.submittedAt) : elVal(e, field);
+      if (!v || v === '—') return '';
+      let shown = esc(v);
+      if (kind === 'tel') shown = `<a href="tel:${esc(v.replace(/[^\d+]/g, ''))}">${esc(v)}</a>`;
+      if (kind === 'mail') shown = `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+      return `<div class="dl-row"><span class="k">${esc(label)}</span><span class="v">${shown}</span></div>`;
+    }).join('');
+    if (rows) html += `<div class="dl-sec">${esc(title)}</div>${rows}`;
+  });
+  document.getElementById('mod-e-body').innerHTML = html;
+  document.getElementById('mod-elder').classList.remove('hidden');
+}
+
+function closeElder() { document.getElementById('mod-elder').classList.add('hidden'); }
+
+document.getElementById('mod-e-close').addEventListener('click', closeElder);
+document.getElementById('mod-elder').addEventListener('click', ev => {
+  if (ev.target === document.getElementById('mod-elder')) closeElder();
+});
+document.getElementById('el-list').addEventListener('click', ev => {
+  const row = ev.target.closest('.el-row');
+  if (row) openElder(row.dataset.id);
+});
+document.getElementById('el-list').addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter' && ev.key !== ' ') return;
+  const row = ev.target.closest('.el-row');
+  if (row) { ev.preventDefault(); openElder(row.dataset.id); }
+});
+document.getElementById('el-search').addEventListener('input', renderElders);
+document.getElementById('el-district').addEventListener('change', renderElders);
+
+// ── Share the form link ────────────────────────────────────
+document.getElementById('el-copy').addEventListener('click', async () => {
+  const link = new URL('elders.html', location.href).href;
+  try {
+    await navigator.clipboard.writeText(link);
+    toast('Form link copied', 'ok');
+  } catch (_) {
+    window.prompt('Copy this link and send it to the elders:', link);
+  }
+});
+
+// ── CSV export (opens in Excel) ────────────────────────────
+const EL_EXPORT = [
+  ['Reference','refNo'],['District','district'],['Church','church'],['Full name','fullName'],['Gender','gender'],
+  ['Date of birth','dateOfBirth'],['Hometown','hometown'],['Residence','residence'],['Phone','phone'],
+  ['WhatsApp','whatsapp'],['Email','email'],['Marital status','maritalStatus'],['Spouse','spouseName'],
+  ['Spouse contact','spouseContact'],['Children','childrenCount'],['Ordination date','ordinationDate'],
+  ['Ordination place','ordinationPlace'],['Ordained by','ordainedBy'],['Training date','trainingDate'],
+  ['Training workshop','trainingTitle'],['Training organiser','trainingOrganiser'],['Positions','positions'],
+  ['Other positions','positionsOther'],['Next of kin','nextOfKinName'],['Relationship','nextOfKinRelationship'],
+  ['Next of kin phone','nextOfKinPhone'],['Next of kin address','nextOfKinAddress'],['Education','educationLevel'],
+  ['Programme or institution','educationDetail'],['Occupation','occupation'],['Place of work','employer'],
+  ['Other information','otherInfo'],['Submitted','submittedAt']
+];
+
+function csvCell(v) {
+  let s = String(v);
+  // Anyone can submit the form, so stop spreadsheet formulas: text starting = + - @ gets a leading apostrophe
+  // (ordinary phone numbers such as +233 24 000 0000 are left alone).
+  if (/^[=+\-@\t\r]/.test(s) && !/^\+?[\d\s()-]+$/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+document.getElementById('el-export').addEventListener('click', () => {
+  const rows = elFiltered().slice().sort((a, b) =>
+    (elGroupKey(a) === elGroupKey(b) ? 0 : DISTRICTS.findIndex(d => d.id === elGroupKey(a)) - DISTRICTS.findIndex(d => d.id === elGroupKey(b))) ||
+    elVal(a, 'fullName').localeCompare(elVal(b, 'fullName')));
+  if (rows.length === 0) { toast('Nothing to export yet.', 'err'); return; }
+
+  const lines = [EL_EXPORT.map(c => csvCell(c[0])).join(',')];
+  rows.forEach(e => {
+    lines.push(EL_EXPORT.map(([, f]) =>
+      csvCell(f === 'submittedAt' ? fmtDate(e.submittedAt) : elVal(e, f))).join(','));
+  });
+
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'vgm-elders-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Exported ' + rows.length + ' elder' + (rows.length === 1 ? '' : 's'), 'ok');
+});
+
+// ══════════════════════════════════════════════════════════
+// MODAL · APPROVE
+// ══════════════════════════════════════════════════════════
+function openApproveModal(user) {
+  _approveUid = user.uid;
+  document.getElementById('mod-a-desc').textContent =
+    'Approving: ' + user.displayName + ' (' + user.email + ')';
+  document.getElementById('mod-a-role').value = user.roleRequested || 'team_member';
+  document.getElementById('mod-a-dist').value = user.districtId || '';
+  document.getElementById('mod-approve').classList.remove('hidden');
+}
+
+function closeApproveModal() {
+  document.getElementById('mod-approve').classList.add('hidden');
+  _approveUid = null;
+}
+
+document.getElementById('mod-a-cancel').addEventListener('click', closeApproveModal);
+document.getElementById('mod-approve').addEventListener('click', e => {
+  if (e.target === document.getElementById('mod-approve')) closeApproveModal();
+});
+
+document.getElementById('mod-a-confirm').addEventListener('click', async () => {
+  if (!_approveUid) return;
+  const role = document.getElementById('mod-a-role').value;
+  const dist = document.getElementById('mod-a-dist').value;
+  if (!dist) { toast('Please select a district.', 'err'); return; }
+
+  const btn = document.getElementById('mod-a-confirm');
+  btn.disabled = true; btn.textContent = 'Approving…';
+
+  try {
+    await db.collection('users').doc(_approveUid).update({
+      approved:    true,
+      status:      'approved',
+      role:        role,
+      districtId:  dist,
+      processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      processedBy: auth.currentUser.uid,
+    });
+    closeApproveModal();
+    toast('User approved successfully ✓', 'ok');
+  } catch (e) {
+    toast('Approval failed: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Approve';
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// MODAL · REJECT
+// ══════════════════════════════════════════════════════════
+function openRejectModal(user) {
+  _rejectUid = user.uid;
+  document.getElementById('mod-r-desc').textContent =
+    'Rejecting: ' + user.displayName + ' (' + user.email + ')';
+  document.getElementById('mod-r-reason').value = '';
+  document.getElementById('mod-reject').classList.remove('hidden');
+}
+
+function closeRejectModal() {
+  document.getElementById('mod-reject').classList.add('hidden');
+  _rejectUid = null;
+}
+
+document.getElementById('mod-r-cancel').addEventListener('click', closeRejectModal);
+document.getElementById('mod-reject').addEventListener('click', e => {
+  if (e.target === document.getElementById('mod-reject')) closeRejectModal();
+});
+
+document.getElementById('mod-r-confirm').addEventListener('click', async () => {
+  if (!_rejectUid) return;
+  const reason = document.getElementById('mod-r-reason').value.trim();
+  const btn = document.getElementById('mod-r-confirm');
+  btn.disabled = true; btn.textContent = 'Rejecting…';
+
+  try {
+    await db.collection('users').doc(_rejectUid).update({
+      approved:        false,
+      status:          'rejected',
+      rejectionReason: reason || null,
+      processedAt:     firebase.firestore.FieldValue.serverTimestamp(),
+      processedBy:     auth.currentUser.uid,
+    });
+    closeRejectModal();
+    toast('Registration rejected.', '');
+  } catch (e) {
+    toast('Rejection failed: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '✗ Reject';
+  }
+});
+</script>
+</body>
+</html>
