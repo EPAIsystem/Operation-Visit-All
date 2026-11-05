@@ -73,7 +73,11 @@ button[disabled]{opacity:.6}
     <div class="f"><label id="churchLabel" for="church">Church</label><input id="church" name="church" maxlength="120"><span class="e">Please write the church.</span></div>
     <div class="f" id="dpBox"><label for="districtPastor">District Pastor</label><input id="districtPastor" name="districtPastor" maxlength="120"></div>
     <div class="f hide" id="lvBox"><label class="req" for="level">Level of your work</label><select id="level" name="level"><option value="">Choose…</option><option>Church</option><option>District</option><option>Mission</option></select><span class="e">Please choose the level.</span></div>
-    <div class="f"><label class="req" id="posLabel" for="position">Position</label><input id="position" name="position" maxlength="150"><span class="e">Please fill this in.</span></div>
+    <div class="f" id="posBox"><label class="req" id="posLabel">Position</label>
+      <div id="posList"></div>
+      <button type="button" id="posAdd" class="p" style="background:#e5f0f7;color:var(--dk);border:1.5px solid var(--blue);margin-top:6px">➕ I hold another portfolio</button>
+      <input type="hidden" id="position" name="position"><span class="e">Please fill this in.</span>
+      <small id="posHint" style="display:block;color:#5b6b78;margin-top:6px">If you hold more than one portfolio, add each one. You will be listed under every one of them.</small></div>
     <div class="f"><label for="stationSince">Serving here since (year)</label><input id="stationSince" name="stationSince" maxlength="40" inputmode="numeric" placeholder="e.g. 2021"></div>
   </div>
 
@@ -129,6 +133,7 @@ button[disabled]{opacity:.6}
     <h2 id="doneTitle">Received. Thank you.</h2>
     <p id="doneText">Your details have gone to the Volta Ghana Mission records.<br><br>Made a mistake? Open this same link on this phone within 48 hours and tap <b>Change</b>.</p>
     <div class="ref" id="refNo">—</div>
+    <div id="alsoBox" style="margin:12px 0"></div>
     <button type="button" id="btnAnother">Fill for someone else</button>
   </div>
 </section>
@@ -151,7 +156,7 @@ const TYPES = {
   officer:     { title: "Mission Officers Biodata Form", who: "officer",  pos: "Your office (e.g. Treasurer, Executive Secretary)",  ord: false, dp: false, church: "Station or church" },
   director:    { title: "Directors Biodata Form",     who: "director",    pos: "Department you direct (e.g. Youth, Health)",         ord: false, dp: false, church: "Station or church" },
   deacon:      { title: "Deacons and Deaconesses Biodata Form", who: "deacon", pos: "Your role (Deacon, Deaconess, Head Deacon…)",      ord: true,  dp: false, church: "Church" },
-  worker:      { title: "Church Workers Biodata Form", who: "worker",     pos: "Your portfolio (e.g. Treasurer, Sabbath School Superintendent). More than one? Write them all.", ord: false, dp: false, church: "Church or station", level: true }
+  worker:      { title: "Church Workers Biodata Form", who: "worker",     pos: "Your portfolio (e.g. Treasurer, Sabbath School Superintendent). More than one? Add each one below.", ord: false, dp: false, church: "Church or station", level: true }
 };
 const type = (new URLSearchParams(location.search).get("type") || "").toLowerCase();
 const T = TYPES[type];
@@ -185,7 +190,27 @@ function collect() {
   d.declaration = $("#declaration").checked;
   return d;
 }
-function applyData(d) { FIELDS.forEach(n => { if (d[n] != null) form.elements[n].value = d[n]; }); }
+// Several portfolios: stored in one field, separated by " | "; each is listed separately in the app
+const POSSEP = " | ", POSMAX = 6;
+function posSync() {
+  form.elements.position.value = [...document.querySelectorAll("#posList input")].map(i => i.value.replace(/[|]/g, " ").replace(/\s+/g, " ").trim()).filter(Boolean).join(POSSEP);
+  $("#posAdd").style.display = document.querySelectorAll("#posList input").length >= POSMAX ? "none" : "";
+}
+function posAdd(t) {
+  const i = document.createElement("input"); i.type = "text"; i.maxLength = 60; i.value = t || "";
+  i.placeholder = document.querySelectorAll("#posList input").length ? "Another portfolio" : "Your portfolio";
+  i.style.marginTop = "6px"; i.setAttribute("aria-label", "Portfolio");
+  i.addEventListener("input", posSync); $("#posList").appendChild(i); posSync();
+}
+function posSet(v) {
+  const parts = String(v || "").split("|").map(x => x.trim()).filter(Boolean);
+  $("#posList").innerHTML = "";
+  (parts.length ? parts : [""]).slice(0, POSMAX).forEach(t => posAdd(t));
+  posSync();
+}
+$("#posAdd").addEventListener("click", () => { posAdd(""); const l = document.querySelectorAll("#posList input"); l[l.length - 1].focus(); });
+posSet("");
+function applyData(d) { FIELDS.forEach(n => { if (d[n] != null) form.elements[n].value = d[n]; }); posSet(d.position); }
 const syncSp = () => $("#spBox").classList.toggle("hide", val("maritalStatus") !== "Married");
 form.addEventListener("change", syncSp);
 
@@ -196,7 +221,15 @@ form.addEventListener("input", () => {
   document.querySelectorAll(".invalid").forEach(x => x.classList.remove("invalid")); $("#declErr").style.display = "none";
   clearTimeout(tm); tm = setTimeout(() => { try { const d = collect(); delete d.declaration; localStorage.setItem(DRAFT, JSON.stringify(d)); } catch (e) {} }, 500);
 });
-try { const r = localStorage.getItem(DRAFT); if (r && T) { applyData(JSON.parse(r)); syncSp(); } } catch (e) {}
+const SHARED = ["fullName","gender","dateOfBirth","church","district","districtPastor","hometown","residence","phone","whatsapp","email","maritalStatus","spouseName","spouseContact","childrenCount","educationLevel","educationDetail","occupation","employer","nextOfKinName","nextOfKinRelationship","nextOfKinPhone","nextOfKinAddress"];
+try {
+  const r = localStorage.getItem(DRAFT);
+  if (r && T) { applyData(JSON.parse(r)); syncSp(); }
+  else if (T) { // same person filling another group: reuse the personal details
+    const o = JSON.parse(localStorage.getItem("vgm-bio-shared") || "null");
+    if (o) { const d = {}; SHARED.forEach(n => { if (o[n] != null) d[n] = o[n]; }); applyData(d); syncSp(); }
+  }
+} catch (e) {}
 
 // 48-hour change window
 const SUBS = "VGM_BIO_SUBS", WIN = 48 * 3600 * 1000;
@@ -235,6 +268,8 @@ function validate() {
   mark("fullName", val("fullName").length < 2);
   mark("district", !val("district"));
   mark("position", val("position").length < 2);
+  if (val("position").length > 200) { mark("position", true); $("#posBox .e").textContent = "Your portfolios are too long together. Please shorten them (200 letters in all)."; }
+  else $("#posBox .e").textContent = "Please fill this in.";
   if (T.level) mark("level", !val("level"));
   mark("phone", !phoneOk(val("phone")));
   const em = val("email"); mark("email", em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
@@ -279,6 +314,8 @@ form.addEventListener("submit", async ev => {
     await Promise.race([(() => { const b = db.batch(); b.set(db.collection(COLLECTION).doc(id), data); b.set(db.collection("directory").doc(id), dirEntry(data, data.phoneKey)); return b.commit(); })(), timeout]);
     try { localStorage.removeItem(DRAFT); } catch (e) {}
     const subs = loadSubs(); subs.push({ id, type, key: data.editKey, at: Date.now(), name: data.fullName, data: collect() }); saveSubs(subs);
+    try { localStorage.setItem("vgm-bio-shared", JSON.stringify(data)); } catch (e) {}
+    showAlso();
     finish("Received. Thank you.", null, data.refNo);
   } catch (err) {
     btn.disabled = false; btn.textContent = "Send";
@@ -286,6 +323,12 @@ form.addEventListener("submit", async ev => {
     showMsg("The form could not be sent. Check your internet and tap Send again. Your answers are still here.");
   }
 });
+// Someone who serves in more than one group (e.g. an officer who is also a director) fills one form per group
+const GROUPNAME = { officer: "Officer", director: "Director", pastor: "Pastor", shepherdess: "Shepherdess", deacon: "Deacon / Deaconess", worker: "Church worker" };
+function showAlso() {
+  $("#alsoBox").innerHTML = '<div class="info"><b>Do you also serve in another group?</b> Your details are kept, so it only takes a minute:<br>' +
+    Object.keys(GROUPNAME).filter(k => k !== type).map(k => '<a href="biodata.html?type=' + k + '" style="display:inline-block;margin:6px 8px 0 0;font-weight:700">➕ ' + GROUPNAME[k] + '</a>').join("") + '</div>';
+}
 $("#btnAnother").addEventListener("click", () => location.reload());
 showRecent();
 </script>
