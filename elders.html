@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Elders Biodata Form</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0b6b5a">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
@@ -157,6 +162,9 @@ input::placeholder,textarea::placeholder{color:#8a9a91;opacity:.8}
   <div class="f" data-req><label class="req" for="church">Present church</label>
     <input type="text" id="church" name="church" placeholder="e.g. Peki Central">
     <span class="err">Enter the church.</span></div>
+  <div class="f span2" data-req><label class="req" for="districtPastor">District Pastor's name</label>
+    <input type="text" id="districtPastor" name="districtPastor" placeholder="e.g. Pastor Kofi Mensah">
+    <span class="err">Enter the name of your District Pastor.</span></div>
 </div></fieldset>
 
 <fieldset class="part"><legend><span class="tag">Part C</span><span class="ttl">Hometown and residence</span></legend>
@@ -320,7 +328,7 @@ const DISTRICTS = ["Peki","Kpando","Ho West","Ho East","Aflao","Hohoe East","Hoh
 
 const $ = (s, r=document) => r.querySelector(s);
 const form = $("#f");
-const FIELDS = ["fullName","gender","dateOfBirth","church","district","hometown","residence","phone","whatsapp","email","maritalStatus","spouseName","spouseContact","childrenCount","ordinationDate","ordinationPlace","ordainedBy","trainingDate","trainingTitle","trainingOrganiser","positionsOther","nextOfKinName","nextOfKinRelationship","nextOfKinPhone","nextOfKinAddress","educationLevel","educationDetail","occupation","employer","otherInfo"];
+const FIELDS = ["fullName","gender","dateOfBirth","church","district","districtPastor","hometown","residence","phone","whatsapp","email","maritalStatus","spouseName","spouseContact","childrenCount","ordinationDate","ordinationPlace","ordainedBy","trainingDate","trainingTitle","trainingOrganiser","positionsOther","nextOfKinName","nextOfKinRelationship","nextOfKinPhone","nextOfKinAddress","educationLevel","educationDetail","occupation","employer","otherInfo"];
 const DRAFT_KEY = "vgm-elders-draft-v1";
 
 DISTRICTS.forEach(d => { const o = document.createElement("option"); o.value = d; $("#districtList").appendChild(o); });
@@ -383,6 +391,7 @@ function validate(){
   let first = null;
   const mark = (id, bad) => { const f = $("#"+id).closest(".f"); if(bad){ f.classList.add("invalid"); first = first || f; } };
   mark("fullName", val("fullName").length < 2);
+  mark("districtPastor", val("districtPastor").length < 2);
   mark("district", val("district").length < 2 || !districtKeyOf(val("district")));
   mark("church", val("church").length < 2);
   mark("phone", !phoneOk(val("phone")));

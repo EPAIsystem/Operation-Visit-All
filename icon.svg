@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0b6b5a"/>
+  <circle cx="256" cy="132" r="40" fill="#f2b632"/>
+  <path d="M256 330C210 298 150 294 96 312V226C150 208 210 212 256 244Z" fill="#fff"/>
+  <path d="M256 330C302 298 362 294 416 312V226C362 208 302 212 256 244Z" fill="#e6f4ef"/>
+  <path d="M256 244V330" stroke="#0b6b5a" stroke-width="6"/>
+  <text x="256" y="436" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="84" letter-spacing="4" fill="#fff">VGMDS</text>
+</svg>
