@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>VGMDS Check</title>
+<style>
+body{margin:0;background:#f2f7fa;color:#0f2230;font:17px/1.45 system-ui,sans-serif;padding:16px}
+.w{max-width:620px;margin:0 auto}h1{font-size:22px;color:#08304d}
+.c{background:#fff;border:1px solid #c5d8e4;border-radius:12px;padding:12px;margin-bottom:10px}
+.ok{color:#1d6b45;font-weight:600}.bad{color:#b3322b;font-weight:600}.m{color:#4f6b7c;font-size:14px}
+button{font:600 18px system-ui;min-height:54px;width:100%;border-radius:12px;border:2px solid #0e5a87;background:#0e5a87;color:#fff;margin:8px 0}
+pre{white-space:pre-wrap;font-size:13px;background:#eef4f8;padding:8px;border-radius:8px}
+</style></head><body><div class="w">
+<h1>VGMDS check</h1>
+<p class="m">This page tests, from your phone, whether the files on the website and the rules in Firebase match. It changes nothing except the optional test below.</p>
+<button id="run">▶ Run the check</button>
+<div id="out"></div>
+<div class="c"><b>Optional: send one test form</b><p class="m">This does exactly what an elder's form does, using a fake person “TEST – delete me” (phone 000 000 000). If it fails, the code below tells us which part is broken. After it works, open the app → Elders, search TEST, open it and tap Remove.</p>
+<button id="test">📨 Send the test form</button><div id="tout"></div></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const row=(ok,t,extra)=>`<div class="c"><span class="${ok?'ok':'bad'}">${ok?'✅':'❌'} ${t}</span>${extra?`<div class="m">${extra}</div>`:''}</div>`;
+firebase.initializeApp(window.VGM_FIREBASE_CONFIG); const db=firebase.firestore();
+async function file(name){ try{ const r=await fetch(name+'?t='+Date.now(),{cache:'no-store'}); return r.ok?await r.text():null; }catch(e){ return null; } }
+$('#run').onclick=async()=>{
+  let h='';
+  const el=await file('elders.html'), bio=await file('biodata.html'), fm=await file('form.html'), ix=await file('index.html');
+  h+=row(!!el&&el.includes('editKey')&&el.includes('dirEntry'),'elders.html is the newest version', el?(el.includes('dirEntry')?'Has the directory step.':'OLD: upload the newest elders.html'):'Not found on the website');
+  h+=row(!!bio&&bio.includes('dirEntry'),'biodata.html (pastors, shepherdesses, officers, directors)', bio?'':'Not uploaded yet');
+  h+=row(!!fm,'form.html (form maker pages)', fm?'':'Not uploaded yet');
+  h+=row(!!ix&&ix.includes('openDirectory'),'index.html is the newest version', ix?(ix.includes('openDirectory')?'':'OLD: upload the newest index.html'):'');
+  // rules probe: "get" on forms is allowed by the newest rules, even for a document that does not exist
+  let rulesNew=false, why='';
+  try{ await db.collection('forms').doc('zzprobe').get(); rulesNew=true; }catch(e){ why=e.code||e.message; }
+  h+=row(rulesNew,'The newest rules are published in Firebase', rulesNew?'':'Firebase says: '+why+'. Paste the newest rules and tap Publish.');
+  $('#out').innerHTML=h;
+};
+$('#test').onclick=async()=>{
+  const out=[]; const add=(ok,t)=>{out.push(row(ok,t)); $('#tout').innerHTML=out.join('');};
+  const phoneKey='000000000', id='ph_'+phoneKey;
+  const ts=firebase.firestore.FieldValue.serverTimestamp();
+  const rec={fullName:'TEST – delete me',gender:'',dateOfBirth:'',church:'Test church',district:'Peki',districtPastor:'Test Pastor',districtKey:'peki',hometown:'',residence:'',phone:'000 000 000',whatsapp:'',email:'',maritalStatus:'',spouseName:'',spouseContact:'',childrenCount:null,ordinationDate:'',ordinationPlace:'',ordainedBy:'',trainingDate:'',trainingTitle:'',trainingOrganiser:'',positions:[],positionsOther:'',nextOfKinName:'',nextOfKinRelationship:'',nextOfKinPhone:'',nextOfKinAddress:'',educationLevel:'',educationDetail:'',occupation:'',employer:'',otherInfo:'',declaration:true,refNo:'ELD-TEST0001',status:'new',source:'web-form',submittedAt:ts,phoneKey,editKey:'0123456789abcdef01234567'};
+  const dir={kind:'elder',fullName:rec.fullName,phone:rec.phone,church:rec.church,district:rec.district,districtKey:rec.districtKey,position:'',phoneKey};
+  try{ const b=db.batch(); b.set(db.collection('elders_biodata').doc(id),rec); b.set(db.collection('directory').doc(id),dir); await b.commit(); add(true,'The form was received, with its directory entry. Everything is working.'); return; }
+  catch(e){ add(false,'Sending both together failed: '+(e.code||e.message)); }
+  try{ await db.collection('elders_biodata').doc(id).set(rec); add(true,'The elder record alone was accepted. So the directory rules are the problem: paste and publish the newest rules.'); }
+  catch(e){ add(false,'The elder record alone failed: '+(e.code||e.message)+'. Either a test record already exists (then it is fine, remove it in the app and try again), or the published rules do not match this form.'); }
+};
+</script></body></html>
