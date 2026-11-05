@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ministerial Biodata Form</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0b4f6c">
+<style>
+:root{--paper:#f2f7fa;--card:#fff;--ink:#0f2230;--muted:#4f6b7c;--line:#c5d8e4;--blue:#0e5a87;--dk:#08304d;--err:#b3322b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px 48px}
+.wrap{max-width:640px;margin:0 auto}
+header{background:var(--blue);color:#fff;margin:0 -16px 16px;padding:18px 16px}
+header small{opacity:.85;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+header h1{margin:4px 0 0;font-size:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:17px;color:var(--dk)}
+.f{margin-bottom:12px}
+label{display:block;font-weight:600;font-size:15px;margin-bottom:4px}
+.req::after{content:" *";color:var(--err)}
+input,select,textarea{width:100%;font:inherit;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:3px solid #9cc5e0}
+textarea{min-height:80px}
+.invalid input,.invalid select{border-color:var(--err)}
+.invalid .e{display:block}
+.e{display:none;color:var(--err);font-size:13px}
+.g2{display:grid;grid-template-columns:1fr;gap:0 12px}
+@media(min-width:560px){.g2{grid-template-columns:1fr 1fr}}
+.hide{display:none}
+button{font:600 18px system-ui;min-height:54px;width:100%;border-radius:12px;border:2px solid var(--blue);background:#fff;color:var(--blue);margin-top:8px}
+button.p{background:var(--blue);color:#fff}
+button[disabled]{opacity:.6}
+.msg{padding:12px;border-radius:10px;border:1.5px solid var(--err);color:var(--err);margin:12px 0;display:none}
+.msg.on{display:block}
+.info{padding:12px;border-radius:10px;background:#e5f0f7;border:1.5px solid var(--blue);color:var(--dk);margin-bottom:12px}
+.decl{display:flex;gap:10px;align-items:flex-start}.decl input{width:24px;height:24px;margin-top:2px}
+.done{display:none}.done.on{display:block}
+.ref{display:inline-block;font:700 22px ui-monospace,Menlo,monospace;padding:10px 14px;border:2px dashed var(--blue);border-radius:10px;margin:8px 0}
+.foot{color:var(--muted);font-size:13px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><small>Seventh-day Adventist Church · Volta Ghana Mission</small><h1 id="title">Biodata Form</h1></header>
+
+<div id="recent"></div>
+
+<form id="f" novalidate autocomplete="on">
+  <div class="card"><h2>About you</h2>
+    <div class="f"><label class="req" for="fullName">Full name</label><input id="fullName" name="fullName" maxlength="120" autocomplete="name"><span class="e">Please write your full name.</span></div>
+    <div class="g2">
+      <div class="f"><label for="gender">Gender</label><select id="gender" name="gender"><option value="">Choose…</option><option>Male</option><option>Female</option></select></div>
+      <div class="f"><label for="dateOfBirth">Date of birth</label><input id="dateOfBirth" name="dateOfBirth" type="date"></div>
+      <div class="f"><label for="hometown">Hometown</label><input id="hometown" name="hometown" maxlength="150"></div>
+      <div class="f"><label for="residence">Where you live now</label><input id="residence" name="residence" maxlength="150"></div>
+    </div>
+  </div>
+
+  <div class="card"><h2>Your phone</h2>
+    <div class="f"><label class="req" for="phone">Phone number</label><input id="phone" name="phone" type="tel" inputmode="tel" maxlength="20" placeholder="0244 123 456" autocomplete="tel"><span class="e">Please write the phone number in full.</span></div>
+    <div class="g2">
+      <div class="f"><label for="whatsapp">WhatsApp number</label><input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" maxlength="20"></div>
+      <div class="f"><label for="email">Email</label><input id="email" name="email" type="email" maxlength="150" autocomplete="email"><span class="e">That email does not look right.</span></div>
+    </div>
+  </div>
+
+  <div class="card"><h2 id="stationTitle">Where you serve</h2>
+    <div class="f"><label class="req" for="district">District</label>
+      <select id="district" name="district"></select><span class="e">Please choose the district.</span></div>
+    <div class="f"><label id="churchLabel" for="church">Church</label><input id="church" name="church" maxlength="120"><span class="e">Please write the church.</span></div>
+    <div class="f" id="dpBox"><label for="districtPastor">District Pastor</label><input id="districtPastor" name="districtPastor" maxlength="120"></div>
+    <div class="f"><label class="req" id="posLabel" for="position">Position</label><input id="position" name="position" maxlength="150"><span class="e">Please fill this in.</span></div>
+    <div class="f"><label for="stationSince">Serving here since (year)</label><input id="stationSince" name="stationSince" maxlength="40" inputmode="numeric" placeholder="e.g. 2021"></div>
+  </div>
+
+  <div class="card hide" id="ordBox"><h2>Ordination or commissioning</h2>
+    <div class="g2">
+      <div class="f"><label for="ordinationDate">Date</label><input id="ordinationDate" name="ordinationDate" maxlength="60"></div>
+      <div class="f"><label for="ordinationPlace">Place</label><input id="ordinationPlace" name="ordinationPlace" maxlength="150"></div>
+    </div>
+    <div class="f"><label for="ordainedBy">By whom</label><input id="ordainedBy" name="ordainedBy" maxlength="150"></div>
+  </div>
+
+  <div class="card"><h2>Family</h2>
+    <div class="f"><label for="maritalStatus">Marital status</label><select id="maritalStatus" name="maritalStatus"><option value="">Choose…</option><option>Single</option><option>Married</option><option>Widowed</option><option>Divorced</option></select></div>
+    <div id="spBox" class="hide">
+      <div class="g2">
+        <div class="f"><label id="spLabel" for="spouseName">Spouse's name</label><input id="spouseName" name="spouseName" maxlength="150"></div>
+        <div class="f"><label for="spouseContact">Spouse's phone</label><input id="spouseContact" name="spouseContact" type="tel" maxlength="30"></div>
+      </div>
+    </div>
+    <div class="f"><label for="childrenCount">Number of children</label><input id="childrenCount" name="childrenCount" type="number" min="0" max="40" inputmode="numeric"></div>
+  </div>
+
+  <div class="card"><h2>School and work</h2>
+    <div class="g2">
+      <div class="f"><label for="educationLevel">Highest education</label><input id="educationLevel" name="educationLevel" maxlength="150"></div>
+      <div class="f"><label for="educationDetail">Programme or school</label><input id="educationDetail" name="educationDetail" maxlength="150"></div>
+      <div class="f"><label for="occupation">Other work (if any)</label><input id="occupation" name="occupation" maxlength="150"></div>
+      <div class="f"><label for="employer">Place of work</label><input id="employer" name="employer" maxlength="150"></div>
+    </div>
+  </div>
+
+  <div class="card"><h2>Next of kin</h2>
+    <div class="g2">
+      <div class="f"><label for="nextOfKinName">Name</label><input id="nextOfKinName" name="nextOfKinName" maxlength="150"></div>
+      <div class="f"><label for="nextOfKinRelationship">Relationship</label><input id="nextOfKinRelationship" name="nextOfKinRelationship" maxlength="100"></div>
+      <div class="f"><label for="nextOfKinPhone">Phone</label><input id="nextOfKinPhone" name="nextOfKinPhone" type="tel" maxlength="30"></div>
+      <div class="f"><label for="nextOfKinAddress">Address</label><input id="nextOfKinAddress" name="nextOfKinAddress" maxlength="180"></div>
+    </div>
+  </div>
+
+  <div class="card"><h2>Anything else</h2>
+    <div class="f"><textarea id="otherInfo" name="otherInfo" maxlength="1500" aria-label="Other information"></textarea></div>
+    <div class="decl"><input type="checkbox" id="declaration"><label for="declaration" class="req" style="font-weight:500">I confirm that what I have written is true.</label></div>
+    <span class="e" id="declErr" style="margin-top:6px">Tick the box to confirm before you send.</span>
+  </div>
+
+  <div class="msg" id="msg" role="alert"></div>
+  <button type="submit" class="p" id="btnSubmit">Send</button>
+</form>
+
+<section class="done" id="done">
+  <div class="card">
+    <h2 id="doneTitle">Received. Thank you.</h2>
+    <p id="doneText">Your details have gone to the Volta Ghana Mission records.<br><br>Made a mistake? Open this same link on this phone within 48 hours and tap <b>Change</b>.</p>
+    <div class="ref" id="refNo">—</div>
+    <button type="button" id="btnAnother">Fill for someone else</button>
+  </div>
+</section>
+
+<p class="foot">Your details are used only for Volta Ghana Mission church administration.</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const COLLECTION = "people_records";
+const DISTRICTS = ["Peki","Kpando","Ho West","Ho East","Aflao","Hohoe East","Hohoe West","Ho City","Akatsi","Anlo","Denu","Sogakope","Kpetoe","Adidome","Adaklu","Dzodze"];
+const OFFICE = "Mission Office";
+// What each kind of person is asked
+const TYPES = {
+  pastor:      { title: "Pastors Biodata Form",       who: "pastor",      pos: "Your role (e.g. District Pastor, Associate Pastor)", ord: true,  dp: false, church: "Church or station" },
+  shepherdess: { title: "Shepherdesses Biodata Form", who: "shepherdess", pos: "Your role (e.g. District Shepherdess)",              ord: true,  dp: true,  church: "Church", sp: "Husband's name" },
+  officer:     { title: "Mission Officers Biodata Form", who: "officer",  pos: "Your office (e.g. Treasurer, Executive Secretary)",  ord: false, dp: false, church: "Station or church" },
+  director:    { title: "Directors Biodata Form",     who: "director",    pos: "Department you direct (e.g. Youth, Health)",         ord: false, dp: false, church: "Station or church" }
+};
+const type = (new URLSearchParams(location.search).get("type") || "").toLowerCase();
+const T = TYPES[type];
+const form = $("#f");
+if (!T) {
+  form.style.display = "none";
+  document.querySelector(".foot").insertAdjacentHTML("beforebegin", '<div class="msg on">This link is not complete. Please ask the person who sent it for the correct link.</div>');
+  $("#title").textContent = "Biodata Form";
+} else {
+  document.title = T.title; $("#title").textContent = T.title;
+  $("#posLabel").textContent = T.pos; $("#churchLabel").textContent = T.church;
+  if (T.ord) $("#ordBox").classList.remove("hide");
+  if (!T.dp) $("#dpBox").classList.add("hide");
+  if (T.sp) $("#spLabel").textContent = T.sp;
+}
+$("#district").innerHTML = '<option value="">Choose…</option>' + DISTRICTS.map(d => '<option>' + d + '</option>').join("") + '<option>' + OFFICE + '</option>';
+
+const FIELDS = ["fullName","gender","dateOfBirth","church","district","districtPastor","hometown","residence","phone","whatsapp","email","maritalStatus","spouseName","spouseContact","childrenCount","position","stationSince","ordinationDate","ordinationPlace","ordainedBy","educationLevel","educationDetail","occupation","employer","nextOfKinName","nextOfKinRelationship","nextOfKinPhone","nextOfKinAddress","otherInfo"];
+const val = n => (form.elements[n].value || "").trim();
+const keyOf = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+function collect() {
+  const d = { category: type };
+  FIELDS.forEach(n => { d[n] = val(n).replace(/\s+/g, " "); });
+  d.childrenCount = d.childrenCount === "" ? null : Math.max(0, Math.min(40, parseInt(d.childrenCount, 10) || 0));
+  d.districtKey = d.district === OFFICE ? "mission_office" : keyOf(d.district);
+  if (d.maritalStatus !== "Married") { d.spouseName = ""; d.spouseContact = ""; }
+  if (!T.ord) { d.ordinationDate = d.ordinationPlace = d.ordainedBy = ""; }
+  if (!T.dp) d.districtPastor = "";
+  d.declaration = $("#declaration").checked;
+  return d;
+}
+function applyData(d) { FIELDS.forEach(n => { if (d[n] != null) form.elements[n].value = d[n]; }); }
+const syncSp = () => $("#spBox").classList.toggle("hide", val("maritalStatus") !== "Married");
+form.addEventListener("change", syncSp);
+
+// Draft kept on this phone
+const DRAFT = "vgm-bio-draft-" + type;
+let tm;
+form.addEventListener("input", () => {
+  document.querySelectorAll(".invalid").forEach(x => x.classList.remove("invalid")); $("#declErr").style.display = "none";
+  clearTimeout(tm); tm = setTimeout(() => { try { const d = collect(); delete d.declaration; localStorage.setItem(DRAFT, JSON.stringify(d)); } catch (e) {} }, 500);
+});
+try { const r = localStorage.getItem(DRAFT); if (r && T) { applyData(JSON.parse(r)); syncSp(); } } catch (e) {}
+
+// 48-hour change window
+const SUBS = "VGM_BIO_SUBS", WIN = 48 * 3600 * 1000;
+const loadSubs = () => { try { return JSON.parse(localStorage.getItem(SUBS) || "[]").filter(s => Date.now() - s.at < WIN && s.type === type); } catch (e) { return []; } };
+const saveSubs = mine => { try {
+  const others = JSON.parse(localStorage.getItem(SUBS) || "[]").filter(s => s.type !== type && Date.now() - s.at < WIN);
+  localStorage.setItem(SUBS, JSON.stringify(others.concat(mine))); } catch (e) {} };
+const newKey = () => { const a = new Uint8Array(12); crypto.getRandomValues(a); return [...a].map(b => b.toString(16).padStart(2, "0")).join(""); };
+const safe = s => String(s).replace(/[<>&"]/g, "");
+let editing = null;
+// Name, church, district and phone are also copied to the shared directory (visible to elders, pastors and officers)
+const dirEntry = (d, phoneKey) => ({ kind: type, fullName: d.fullName, phone: d.phone, church: d.church, district: d.district, districtKey: d.districtKey, position: d.position, phoneKey });
+function showRecent() {
+  const box = $("#recent"), L = T ? loadSubs() : [];
+  if (!L.length) { box.innerHTML = ""; return; }
+  box.innerHTML = '<div class="info"><b>You can still change a form you sent</b> (for 48 hours).' +
+    L.map((s, i) => '<button type="button" class="p" data-i="' + i + '">✏️ Change: ' + safe(s.name) + '</button>').join("") + '</div>';
+  box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    const s = loadSubs()[+b.dataset.i]; if (!s) return;
+    editing = { id: s.id, key: s.key };
+    applyData(s.data); syncSp(); form.elements.phone.readOnly = true;
+    $("#btnSubmit").textContent = "Save changes";
+    box.innerHTML = '<div class="info">You are changing the form of <b>' + safe(s.name) + '</b>. The phone number cannot be changed.</div>';
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }));
+}
+
+let db = null;
+const CFG = window.VGM_FIREBASE_CONFIG || {};
+if (CFG.apiKey && window.firebase) { try { firebase.initializeApp(CFG); db = firebase.firestore(); } catch (e) {} }
+
+const phoneOk = v => { const n = v.replace(/\D/g, ""); return n.length >= 9 && n.length <= 15 && /^[\d+\s()-]+$/.test(v); };
+function validate() {
+  let first = null;
+  const mark = (id, bad) => { if (bad) { const f = $("#" + id).closest(".f"); f.classList.add("invalid"); first = first || f; } };
+  mark("fullName", val("fullName").length < 2);
+  mark("district", !val("district"));
+  mark("position", val("position").length < 2);
+  mark("phone", !phoneOk(val("phone")));
+  const em = val("email"); mark("email", em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
+  if (!$("#declaration").checked) { $("#declErr").style.display = "block"; first = first || $("#declErr"); }
+  return first;
+}
+const showMsg = t => { const m = $("#msg"); m.textContent = t; m.classList.add("on"); m.scrollIntoView({ behavior: "smooth", block: "center" }); };
+const refNumber = () => "REC-" + Date.now().toString(36).toUpperCase().slice(-5) + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3).padEnd(3, "X");
+const finish = (title, text, ref) => {
+  $("#doneTitle").textContent = title; if (text) $("#doneText").textContent = text; if (ref) $("#refNo").textContent = ref; else $("#refNo").style.display = "none";
+  form.style.display = "none"; $("#recent").innerHTML = ""; $("#done").classList.add("on"); window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+form.addEventListener("submit", async ev => {
+  ev.preventDefault(); $("#msg").classList.remove("on");
+  if (!T) return;
+  const bad = validate();
+  if (bad) { bad.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  if (!db) { showMsg("Sending is not switched on yet. Please tell the person who sent you this link."); return; }
+  const btn = $("#btnSubmit"); btn.disabled = true; btn.textContent = "Sending…";
+  const data = collect();
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000));
+  if (editing) {
+    data.editProof = editing.key; data.editedAt = firebase.firestore.FieldValue.serverTimestamp();
+    try {
+      await Promise.race([(() => { const b = db.batch(); b.update(db.collection(COLLECTION).doc(editing.id), data); b.set(db.collection("directory").doc(editing.id), dirEntry(data, editing.id.split("_").pop())); return b.commit(); })(), timeout]);
+      const subs = loadSubs().map(s => s.id === editing.id ? Object.assign({}, s, { data: collect(), name: data.fullName }) : s); saveSubs(subs);
+      try { localStorage.removeItem(DRAFT); } catch (e) {}
+      finish("Changes saved", "Your changes have been saved.", null);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = "Save changes";
+      showMsg(err && err.code === "permission-denied" ? "The 48 hours for changing this form are over. Please tell the Ministerial Secretary's office if something must be corrected." : "Could not save. Check your internet and try again.");
+    }
+    return;
+  }
+  data.phoneKey = String(data.phone).replace(/\D/g, "").slice(-9);
+  if (!/^[0-9]{9}$/.test(data.phoneKey)) { btn.disabled = false; btn.textContent = "Send"; showMsg("Please write the phone number in full, for example 0244 123 456."); return; }
+  data.refNo = refNumber(); data.status = "new"; data.source = "web-form"; data.editKey = newKey();
+  data.submittedAt = firebase.firestore.FieldValue.serverTimestamp();
+  const id = type + "_" + data.phoneKey;
+  try {
+    await Promise.race([(() => { const b = db.batch(); b.set(db.collection(COLLECTION).doc(id), data); b.set(db.collection("directory").doc(id), dirEntry(data, data.phoneKey)); return b.commit(); })(), timeout]);
+    try { localStorage.removeItem(DRAFT); } catch (e) {}
+    const subs = loadSubs(); subs.push({ id, type, key: data.editKey, at: Date.now(), name: data.fullName, data: collect() }); saveSubs(subs);
+    finish("Received. Thank you.", null, data.refNo);
+  } catch (err) {
+    btn.disabled = false; btn.textContent = "Send";
+    if (err && err.code === "permission-denied") { showMsg("A form with this phone number has already been sent. Thank you, you do not need to send it again. If something must be corrected, please tell the Ministerial Secretary's office."); return; }
+    showMsg("The form could not be sent. Check your internet and tap Send again. Your answers are still here.");
+  }
+});
+$("#btnAnother").addEventListener("click", () => location.reload());
+showRecent();
+</script>
+</body>
+</html>

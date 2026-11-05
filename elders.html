@@ -15,8 +15,8 @@
 <style>
 /* Layout: one calm column on phones, two-column field grid on wider screens. Parts A–J follow the order of the paper form. */
 :root{
-  --paper:#f4f6f3; --card:#ffffff; --ink:#14231d; --muted:#5b6b63; --line:#cfd8d2;
-  --green:#1d5a43; --green-ink:#ffffff; --gold:#c8a028; --red:#b3322b; --ok:#1d6b45; --err:#b3322b;
+  --paper:#f2f7fa; --card:#ffffff; --ink:#0f2230; --muted:#4f6b7c; --line:#c5d8e4;
+  --green:#0e5a87; --green-ink:#ffffff; --gold:#c8a028; --red:#b3322b; --ok:#1d6b45; --err:#b3322b;
   --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
   --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -137,6 +137,7 @@ input::placeholder,textarea::placeholder{color:#8a9a91;opacity:.8}
   <button type="button" id="btnPrintFilled">Print this copy</button>
 </div>
 
+<div id="recent" class="noprint"></div>
 <form id="f" novalidate autocomplete="on">
 
 <fieldset class="part"><legend><span class="tag">Part A</span><span class="ttl">Personal details</span></legend>
@@ -301,8 +302,8 @@ input::placeholder,textarea::placeholder{color:#8a9a91;opacity:.8}
 </form>
 
 <section class="done" id="done" aria-live="polite">
-  <h2>Form received</h2>
-  <p>Thank you. Your details have gone to the Volta Ghana Mission elders register. Please keep this reference number.</p>
+  <h2 id="doneTitle">Form received</h2>
+  <p id="doneText">Thank you. Your details have gone to the Volta Ghana Mission elders register. Please keep this reference number.<br><br>Made a mistake? Open this same link on this phone within 48 hours and tap <b>Change</b>.</p>
   <div class="ref" id="refNo">—</div>
   <div class="tools">
     <button type="button" class="primary" id="btnPrintDone">Print my copy</button>
@@ -407,6 +408,29 @@ function refNumber(){
   return "ELD-" + t + r;
 }
 function showMsg(t){ const m = $("#msg"); m.textContent = t; m.classList.add("on"); m.scrollIntoView({behavior:"smooth", block:"center"}); }
+/* Change a form you sent: possible for 48 hours, on the same phone that sent it */
+const SUBS_KEY = "VGM_ELDER_SUBS", WINDOW_MS = 48*3600*1000;
+function loadSubs(){ try{ return JSON.parse(localStorage.getItem(SUBS_KEY)||"[]").filter(s => Date.now()-s.at < WINDOW_MS); }catch(e){ return []; } }
+function saveSubs(a){ try{ localStorage.setItem(SUBS_KEY, JSON.stringify(a)); }catch(e){} }
+function newKey(){ const a = new Uint8Array(12); (window.crypto||window.msCrypto).getRandomValues(a); return [...a].map(b => b.toString(16).padStart(2,"0")).join(""); }
+let editing = null;
+/* Name, church, district and phone are also copied to the shared directory (visible to elders, pastors and officers). */
+function dirEntry(d, phoneKey){ return { kind:"elder", fullName:d.fullName, phone:d.phone, church:d.church, district:d.district, districtKey:d.districtKey, position:"", phoneKey:phoneKey }; }
+function showRecent(){
+  const box = $("#recent"), L = loadSubs();
+  if(!L.length){ box.innerHTML = ""; return; }
+  box.innerHTML = '<div class="msg on" style="display:block;background:#e5f0f7;border-color:#0e5a87;color:#08304d"><b>You can still change a form you sent</b> (for 48 hours).<br>' +
+    L.map((s,i) => '<button type="button" class="primary" style="margin-top:8px;width:100%" data-i="'+i+'">✏️ Change: '+s.name.replace(/[<>&"]/g,"")+'</button>').join("") + '</div>';
+  box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    const s = loadSubs()[+b.dataset.i]; if(!s) return;
+    editing = { id: s.id, key: s.key };
+    applyData(s.data); syncSpouse(); progress();
+    form.elements.phone.readOnly = true;
+    $("#btnSubmit").textContent = "Save changes";
+    box.innerHTML = '<div class="msg on" style="display:block">You are changing the form of <b>'+s.name.replace(/[<>&"]/g,"")+'</b>. The phone number cannot be changed.</div>';
+    window.scrollTo({top:0, behavior:"smooth"});
+  }));
+}
 let db = null;
 if(FIREBASE_CONFIG.apiKey && window.firebase){ try{ firebase.initializeApp(FIREBASE_CONFIG); db = firebase.firestore(); }catch(e){ db = null; } }
 
@@ -418,19 +442,45 @@ form.addEventListener("submit", async ev => {
   if(!db){ showMsg("Online submission is not switched on yet. Use \"Print this copy\" and hand the printed form to your District Pastor."); return; }
   const btn = $("#btnSubmit"); btn.disabled = true; btn.textContent = "Sending…";
   const data = collect();
-  data.refNo = refNumber(); data.status = "new"; data.source = "web-form";
+  if(editing){
+    data.editProof = editing.key; data.editedAt = firebase.firestore.FieldValue.serverTimestamp();
+    try{
+      await Promise.race([ (() => { const b = db.batch(); b.update(db.collection(COLLECTION).doc(editing.id), data); b.set(db.collection("directory").doc(editing.id), dirEntry(data, editing.id.slice(3))); return b.commit(); })(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000)) ]);
+      const subs = loadSubs().map(s => s.id === editing.id ? Object.assign({}, s, { data: collect(), name: data.fullName }) : s); saveSubs(subs);
+      clearDraft();
+      $("#doneTitle").textContent = "Changes saved"; $("#doneText").textContent = "Your changes have been saved in the Volta Ghana Mission elders register.";
+      form.style.display = "none"; $(".tools").style.display = "none"; $(".bar").style.display = "none"; $("#recent").innerHTML = "";
+      $("#done").classList.add("on"); window.scrollTo({top:0, behavior:"smooth"});
+    }catch(err){
+      btn.disabled = false; btn.textContent = "Save changes";
+      showMsg(err && err.code === "permission-denied"
+        ? "The 48 hours for changing this form are over. Please tell your District Pastor if something must be corrected."
+        : "The changes could not be saved. Check your internet connection and tap Save changes again.");
+    }
+    return;
+  }
+  data.refNo = refNumber(); data.status = "new"; data.source = "web-form"; data.editKey = newKey();
+  // One form per phone number: the record's ID is made from the phone, so a second
+  // submission with the same number is refused instead of creating a duplicate.
+  data.phoneKey = String(data.phone || "").replace(/\D/g, "").slice(-9);
+  if(!/^[0-9]{9}$/.test(data.phoneKey)){ btn.disabled = false; btn.textContent = "Submit form"; showMsg("Please write the phone number in full, for example 0244 123 456."); return; }
   data.submittedAt = firebase.firestore.FieldValue.serverTimestamp();
   try{
     await Promise.race([
-      db.collection(COLLECTION).add(data),
+      (() => { const b = db.batch(); b.set(db.collection(COLLECTION).doc("ph_" + data.phoneKey), data); b.set(db.collection("directory").doc("ph_" + data.phoneKey), dirEntry(data, data.phoneKey)); return b.commit(); })(),
       new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000))
     ]);
     clearDraft();
+    { const subs = loadSubs(); subs.push({ id: "ph_" + data.phoneKey, key: data.editKey, at: Date.now(), name: data.fullName, data: collect() }); saveSubs(subs); }
     $("#refNo").textContent = data.refNo;
     form.style.display = "none"; $(".tools").style.display = "none"; $(".bar").style.display = "none";
     $("#done").classList.add("on"); window.scrollTo({top:0, behavior:"smooth"});
   }catch(err){
     btn.disabled = false; btn.textContent = "Submit form";
+    if(err && err.code === "permission-denied"){
+      showMsg("A form with this phone number has already been sent. Thank you, you do not need to send it again. If something must be corrected, please tell your District Pastor.");
+      return;
+    }
     showMsg("The form could not be sent. Check your internet connection and tap Submit again. Your answers are still here, and you can also print this form.");
   }
 });
@@ -449,7 +499,7 @@ $("#btnPrintFilled").addEventListener("click", printFilled);
 $("#btnPrintDone").addEventListener("click", () => { form.style.display = ""; window.print(); form.style.display = "none"; });
 $("#btnAnother").addEventListener("click", () => location.reload());
 
-restoreDraft(); syncSpouse(); progress();
+restoreDraft(); syncSpouse(); progress(); showRecent();
 </script>
 
 </body></html>

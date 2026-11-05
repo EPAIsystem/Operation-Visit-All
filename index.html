@@ -466,6 +466,21 @@ body {
   animation: spin .65s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.dir-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.dir-card .n{font-weight:600}.dir-card .s{font-size:13px;color:var(--muted);margin:2px 0 8px}
+.dir-btns{display:flex;gap:8px;flex-wrap:wrap}.dir-btns a{text-decoration:none;display:inline-flex;align-items:center}
+.fm-l{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+.fm-q{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.fm-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.fm-row input.fm-label{flex:1;min-width:0}
+.fm-q input[type=text],.fm-q input:not([type]),.fm-q select,.fm-q textarea,#fm-title,#fm-desc{width:100%;font:inherit;padding:11px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.fm-row select{flex:1}
+.fm-chk{display:flex;gap:8px;align-items:center;font-size:15px}
+.fm-chk input{width:22px;height:22px}
+.fm-act button,.fm-add button{font:600 15px system-ui;min-height:44px;padding:0 12px;border-radius:10px;border:1.5px solid var(--teal);background:#fff;color:var(--teal)}
+.fm-add{display:flex;flex-wrap:wrap;gap:8px}
+.fm-resp{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}
 </style>
 </head>
 <body>
@@ -620,8 +635,33 @@ body {
         <span class="tag">📍 <span id="d-dist">—</span></span>
       </div>
     </div>
+    <button class="tile hidden" id="btn-open-dir"><span class="ic">📒</span><span>Directory<small>Names and phone numbers</small></span></button>
+    <button class="tile" id="btn-open-forms"><span class="ic">📝</span><span>Forms<small>Make a form and collect answers</small></span></button>
     <button class="tile" id="btn-open-ova"><span class="ic">🚶</span><span>Operation Visit All<small>Visit reports, members, teams</small></span></button>
   </div>
+</div>
+
+<div id="screen-dir" class="screen hidden">
+  <div class="bar">
+    <div><h2>📒 Directory</h2><p>Names and phone numbers</p></div>
+    <button class="btn-ghost" id="dir-back">←</button>
+  </div>
+  <div class="ova-body">
+    <div class="field"><input type="search" id="dir-search" placeholder="Search name, church, district or phone" autocomplete="off"></div>
+    <div class="field"><select id="dir-kind" aria-label="Who"></select></div>
+    <div class="field"><select id="dir-district" aria-label="District"></select></div>
+    <button class="big-btn hidden" id="dir-fill">♻️ Add people who filled forms earlier</button>
+    <p class="el-count" id="dir-count"></p>
+    <div id="dir-list"></div>
+  </div>
+</div>
+
+<div id="screen-forms" class="screen hidden">
+  <div class="bar">
+    <div><h2 id="forms-title">📝 Forms</h2><p>Make a form, share it, collect answers</p></div>
+    <button class="btn-ghost" id="forms-back">←</button>
+  </div>
+  <div class="ova-body" id="forms-body"></div>
 </div>
 
 <div id="screen-ova" class="screen hidden">
@@ -650,17 +690,34 @@ body {
     <button class="a-tab" id="at-all">All Users</button>
     <button class="a-tab" id="at-depts">🏢 Departments</button>
     <button class="a-tab hidden" id="at-elders">Elders</button>
+    <button class="a-tab hidden" id="at-records">Records</button>
   </div>
   <div class="panel" id="panel-pending"><div id="pending-list"></div></div>
   <div class="panel hidden" id="panel-all"><div id="all-list"></div></div>
   <div class="panel hidden" id="panel-depts"><div id="dept-list"></div></div>
+  <div class="panel hidden" id="panel-records">
+    <button class="back-btn" id="rc-back">← Departments</button>
+    <h3 style="margin:4px 0 0" id="rc-title">📖 Ministerial records</h3>
+    <div id="rc-links"></div>
+    <div class="field" style="margin-top:12px">
+      <select id="rc-cat" aria-label="Who"></select>
+    </div>
+    <div class="field">
+      <label style="font-weight:600;font-size:14px">📅 Who was serving on this date?</label>
+      <input type="text" id="rc-asat" inputmode="numeric" placeholder="Type a year (2005) or a date (2005-06-30). Empty = today" autocomplete="off">
+    </div>
+    <div class="field"><input type="search" id="rc-search" placeholder="Search name, church, position or phone" autocomplete="off"></div>
+    <div class="field" id="rc-dist-wrap"><select id="rc-district" aria-label="District"></select></div>
+    <div class="el-actions"><button class="btn btn-primary btn-sm" id="rc-export">⬇ Download list (Excel)</button></div>
+    <p class="el-count" id="rc-count"></p>
+    <div id="rc-list"></div>
+  </div>
   <div class="panel hidden" id="panel-elders">
     <button class="back-btn" id="el-back">← Departments</button>
     <h3 style="margin:4px 0 0">👴 Elders</h3>
     <div id="el-share-box" class="hidden">
-      <p class="dept-note" style="margin-top:10px">Who else may see the elders' information?<br>Tap to turn on or off.</p>
+      <p class="dept-note" style="margin-top:10px">Who else may see the ministerial records? (The Executive Secretary always can.)<br>Tap to turn on or off.</p>
       <button class="share-row" id="sh-pastors"><span class="box">⬜</span><span>District Pastors<br><small style="font-weight:400;color:var(--muted)">Each pastor sees only their own district</small></span></button>
-      <button class="share-row" id="sh-exec"><span class="box">⬜</span><span>Executive Secretary</span></button>
     </div>
     <p class="dept-note" style="margin-top:14px">Send this link to the elders. They fill the form on their phone and it comes here.</p>
     <button class="big-btn fill" id="el-share">📤 Share the form link</button>
@@ -682,6 +739,18 @@ body {
   </div>
 </div>
 
+<!-- MODAL · RECORD DETAIL -->
+<div id="mod-rec" class="modal-bg hidden">
+  <div class="modal tall">
+    <div class="modal-handle"></div>
+    <h3 id="mod-r-name">Record</h3>
+    <p class="sub" id="mod-r-sub"></p>
+    <div id="mod-r-body"></div>
+    <div class="modal-actions" id="mod-r-acts"></div>
+    <div class="modal-actions"><button class="btn btn-outline btn-sm" id="mod-r-close">Close</button></div>
+  </div>
+</div>
+
 <!-- MODAL · ELDER DETAIL -->
 <div id="mod-elder" class="modal-bg hidden">
   <div class="modal tall">
@@ -689,6 +758,7 @@ body {
     <h3 id="mod-e-name">Elder</h3>
     <p class="sub" id="mod-e-sub"></p>
     <div id="mod-e-body"></div>
+    <div class="modal-actions" id="mod-e-acts"></div>
     <div class="modal-actions">
       <button class="btn btn-outline btn-sm" id="mod-e-close">Close</button>
     </div>
@@ -834,7 +904,7 @@ fillDistrictSelect('mod-a-dist');
 (function(){ var o=document.createElement('option'); o.value='mission'; o.textContent='Mission Office (all districts)'; document.getElementById('mod-a-dist').appendChild(o); })();
 
 // ── SCREEN MANAGER ─────────────────────────────────────────
-const SCREENS = ['auth','pending','rejected','dashboard','admin','ova'];
+const SCREENS = ['auth','pending','rejected','dashboard','admin','ova','forms','dir'];
 let _dashData = null;
 function show(id) {
   SCREENS.forEach(s =>
@@ -870,6 +940,7 @@ function clearSubs() {
   _subs = [];
   _eldersUnsub = null;
   _elders = [];
+  _recStarted = false; _recE = []; _recP = [];
 }
 
 // ── PENDING MODAL UIDS ─────────────────────────────────────
@@ -991,6 +1062,8 @@ document.getElementById('btn-resend').addEventListener('click', async () => {
 });
 document.getElementById('btn-so-rejected').addEventListener('click', signOut);
 document.getElementById('btn-open-ova').addEventListener('click', () => openOva(_dashData, 'dashboard'));
+document.getElementById('btn-open-dir').addEventListener('click', () => openDirectory(_dashData, 'dashboard'));
+document.getElementById('btn-open-forms').addEventListener('click', () => openForms(_dashData, {}, 'dashboard'));
 document.getElementById('btn-so-dash')    .addEventListener('click', signOut);
 document.getElementById('btn-so-admin')   .addEventListener('click', signOut);
 
@@ -1169,6 +1242,7 @@ function renderDashboard(data) {
     'Welcome, ' + (data.displayName?.split(' ')[0] || 'Member') + '!';
   document.getElementById('d-role').textContent = rName(data.role);
   document.getElementById('d-dist').textContent = dName(data.districtId);
+  document.getElementById('btn-open-dir').classList.toggle('hidden', !(window.canSeeDirectory && window.canSeeDirectory(data.role)));
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1389,13 +1463,14 @@ async function loadAllUsers() {
 
 // ── Admin tab switching ────────────────────────────────────
 function adminTab(name) {
-  ['pending', 'all', 'depts', 'elders'].forEach(n => {
-    document.getElementById('at-' + n).classList.toggle('active', n === name || (name === 'elders' && n === 'depts'));
+  ['pending', 'all', 'depts', 'elders', 'records'].forEach(n => {
+    document.getElementById('at-' + n).classList.toggle('active', n === name || ((name === 'elders' || name === 'records') && n === 'depts'));
     document.getElementById('panel-' + n).classList.toggle('hidden', n !== name);
   });
   if (name === 'all') loadAllUsers();
   if (name === 'depts') startDepts();
   if (name === 'elders') startElders();
+  if (name === 'records') startRecords();
 }
 ['pending', 'all', 'depts'].forEach(n =>
   document.getElementById('at-' + n).addEventListener('click', () => adminTab(n))
@@ -1418,7 +1493,7 @@ function isDeptAdmin() { return _adminData && (_adminData.role === 'mission_admi
 function isElderManager() {
   return _adminData && (_adminData.role === 'mission_admin' || _adminData.role === 'ministerial_secretary' || engineerOk());
 }
-function canSeeElders() { return isElderManager() || (_adminData && _shareRoles.includes(_adminData.role)); }
+function canSeeElders() { return isElderManager() || (_adminData && _adminData.role === 'exec_secretary') || (_adminData && _shareRoles.includes(_adminData.role)); }
 function seesAllDistricts() { return !(_adminData && DISTRICT_LEAD_ROLES.includes(_adminData.role)); }
 
 function watchShares() {
@@ -1438,7 +1513,6 @@ function paintShares() {
     b.querySelector('.box').textContent = on ? '✅' : '⬜';
   };
   set('sh-pastors', has('district_pastor'));
-  set('sh-exec', has('exec_secretary'));
 }
 
 async function toggleShare(roles, btnId) {
@@ -1453,7 +1527,6 @@ async function toggleShare(roles, btnId) {
   } catch (e) { toast('Could not save. Try again.', 'err'); }
 }
 document.getElementById('sh-pastors').addEventListener('click', () => toggleShare(['district_pastor', 'assoc_district_pastor'], 'sh-pastors'));
-document.getElementById('sh-exec').addEventListener('click', () => toggleShare(['exec_secretary'], 'sh-exec'));
 
 const DEPT_LEVELS = [
   ['mission', '🏛️ Mission departments'],
@@ -1508,7 +1581,9 @@ const DEPT_ICON = { evangelism: '📣', president_initiatives: '⭐' };
 function renderDepts() {
   const box = document.getElementById('dept-list');
   if (!box || !_adminData) return;
-  let html = '';
+  let html = `<div class="dept-card"><h4>📝 Forms</h4><p class="dept-note">Make your own form, share the link, and collect answers.</p>
+    <button class="tile" data-forms=""><span class="ic">📝</span><span>My forms<small>Make a new form or see answers</small></span></button>
+    <button class="tile" data-dir="1"><span class="ic">📒</span><span>Directory<small>Names and phone numbers of elders, pastors and officers</small></span></button></div>`;
   DEPT_LEVELS.forEach(([level, title]) => {
     const rows = _depts.filter(d => d.level === level).sort((a, b) => (a.order || 99) - (b.order || 99) || String(a.name).localeCompare(String(b.name)));
     html += `<div class="dept-h">${title}</div>`;
@@ -1518,12 +1593,18 @@ function renderDepts() {
         html += `<div class="dept-card"><h4>📖 ${esc(d.name)}</h4>
           <p class="dept-note">Forms and reports for ministers.</p>
           <button class="tile" data-go="elders"><span class="ic">👴</span><span>Elders<small>Open the elders' information</small></span></button>
-          <button class="tile" disabled><span class="ic">🙏</span><span>Pastors<small>Coming soon</small></span></button>
-          <button class="tile" disabled><span class="ic">👩</span><span>Shepherdesses<small>Coming soon</small></span></button>
+          <button class="tile" data-rec="pastor"><span class="ic">🙏</span><span>Pastors<small>Open the pastors' information</small></span></button>
+          <button class="tile" data-rec="shepherdess"><span class="ic">👩</span><span>Shepherdesses<small>Open the shepherdesses' information</small></span></button>
+          <button class="tile" data-rec="officer"><span class="ic">🏛️</span><span>Officers<small>Mission officers</small></span></button>
+          <button class="tile" data-rec="director"><span class="ic">🧭</span><span>Directors<small>Department directors</small></span></button>
+          <button class="tile" data-act-members="1"><span class="ic">👥</span><span>Members<small>Church members</small></span></button>
+          <button class="tile" data-rec="all"><span class="ic">📅</span><span>Who served in…?<small>Pick a year, see everyone then</small></span></button>
+          <button class="tile" data-forms="${esc(d.id)}" data-fname="${esc(d.name)}"><span class="ic">📝</span><span>Forms<small>Make and share a form</small></span></button>
         </div>`;
       } else {
         const acts = _acts.filter(a => a.deptId === d.id).sort((a, b) => (a.order || 99) - (b.order || 99) || String(a.name).localeCompare(String(b.name)));
         html += `<div class="dept-card"><h4>${DEPT_ICON[d.id] || '📁'} ${esc(d.name)}</h4>`;
+        if (MISSION_ROLES.includes(_adminData.role)) html += `<button class="tile" data-forms="${esc(d.id)}" data-fname="${esc(d.name)}"><span class="ic">📝</span><span>Forms<small>Make and share a form</small></span></button>`;
         if (!acts.length) html += '<p class="dept-note">No activities yet.</p>';
         acts.forEach(a => {
           html += `<button class="tile" data-act="${esc(a.id)}"><span class="ic">${a.key === 'visit_all' ? '🚶' : '📌'}</span><span>${esc(a.name)}<small>${a.key === 'visit_all' ? 'Visit reports, members, teams' : 'Open'}</small></span></button>`;
@@ -1543,6 +1624,12 @@ function renderDepts() {
 document.getElementById('dept-list').addEventListener('click', async ev => {
   const go = ev.target.closest('[data-go]');
   if (go && go.dataset.go === 'elders') { adminTab('elders'); return; }
+  if (ev.target.closest('[data-dir]')) { openDirectory(_adminData, 'admin'); return; }
+  const fm = ev.target.closest('[data-forms]');
+  if (fm) { openForms(_adminData, fm.dataset.forms ? { deptId: fm.dataset.forms, deptName: fm.dataset.fname } : {}, 'admin'); return; }
+  const rc = ev.target.closest('[data-rec]');
+  if (rc) { _recCat = rc.dataset.rec; adminTab('records'); return; }
+  if (ev.target.closest('[data-act-members]')) { openOva(_adminData, 'admin'); return; }
   const act = ev.target.closest('[data-act]');
   if (act) {
     const a = _acts.find(x => x.id === act.dataset.act);
@@ -1757,6 +1844,7 @@ function openElder(id) {
     if (rows) html += `<div class="dl-sec">${esc(title)}</div>${rows}`;
   });
   document.getElementById('mod-e-body').innerHTML = html;
+  document.getElementById('mod-e-acts').innerHTML = managerButtons(e, 'elders');
   document.getElementById('mod-elder').classList.remove('hidden');
 }
 
@@ -1841,6 +1929,205 @@ document.getElementById('el-export').addEventListener('click', () => {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast('Exported ' + rows.length + ' elder' + (rows.length === 1 ? '' : 's'), 'ok');
+});
+
+// ══════════════════════════════════════════════════════════
+// MINISTERIAL RECORDS (pastors, shepherdesses, officers, directors + elders)
+// One screen. Pick who, pick a date, see who was serving then.
+// Nobody is deleted by default: "Archive" keeps the record and marks when service ended.
+// ══════════════════════════════════════════════════════════
+const REC_CATS = [
+  ['all', '👥 Everyone'], ['elder', '👴 Elders'], ['pastor', '🙏 Pastors'],
+  ['shepherdess', '👩 Shepherdesses'], ['officer', '🏛️ Officers'], ['director', '🧭 Directors']
+];
+const REC_FORM = { elder: 'elders.html', pastor: 'biodata.html?type=pastor', shepherdess: 'biodata.html?type=shepherdess', officer: 'biodata.html?type=officer', director: 'biodata.html?type=director' };
+const REC_WORD = { elder: 'Elder', pastor: 'Pastor', shepherdess: 'Shepherdess', officer: 'Officer', director: 'Director' };
+const REC_SECTIONS = [
+  ['Service', [['Position', 'position'], ['Serving since', 'stationSince'], ['Stopped serving', 'servedTo']]],
+  ['Personal', [['Gender', 'gender'], ['Date of birth', 'dateOfBirth'], ['Hometown', 'hometown'], ['Residence', 'residence']]],
+  ['Church', [['District', 'district'], ['Church or station', 'church'], ['District Pastor', 'districtPastor']]],
+  ['Contact', [['Phone', 'phone', 'tel'], ['WhatsApp', 'whatsapp', 'tel'], ['Email', 'email', 'mail']]],
+  ['Family', [['Marital status', 'maritalStatus'], ['Spouse', 'spouseName'], ['Spouse contact', 'spouseContact', 'tel'], ['Children', 'childrenCount']]],
+  ['Ordination', [['Date', 'ordinationDate'], ['Place', 'ordinationPlace'], ['By', 'ordainedBy']]],
+  ['Next of kin', [['Name', 'nextOfKinName'], ['Relationship', 'nextOfKinRelationship'], ['Phone', 'nextOfKinPhone', 'tel'], ['Address', 'nextOfKinAddress']]],
+  ['Education and work', [['Education', 'educationLevel'], ['Programme or school', 'educationDetail'], ['Other work', 'occupation'], ['Place of work', 'employer']]],
+  ['Other', [['Other information', 'otherInfo']]],
+  ['Record', [['Reference', 'refNo'], ['Submitted', 'submittedAt', 'date']]]
+];
+let _recCat = 'all', _recE = [], _recP = [], _recStarted = false;
+
+function recAll() {
+  return _recE.map(e => Object.assign({}, e, { cat: 'elder', _col: 'elders_biodata' }))
+    .concat(_recP.map(p => Object.assign({}, p, { cat: p.category, _col: 'people_records' })));
+}
+function recIsoToMs(v) { const t = Date.parse(v); return isNaN(t) ? null : t; }
+function recStart(r) {
+  const y = String((r.cat === 'elder' ? r.ordinationDate : r.stationSince) || '').match(/(19|20)\d{2}/);
+  return y ? new Date(+y[0], 0, 1).getTime() : null;
+}
+function recEnd(r) { return r.servedTo ? recIsoToMs(r.servedTo) : null; }
+// The date (or year) typed in the "who was serving" box → [from, to] in ms
+function recRange() {
+  const t = document.getElementById('rc-asat').value.trim();
+  if (/^(19|20)\d{2}$/.test(t)) return { lo: new Date(+t, 0, 1).getTime(), hi: new Date(+t, 11, 31, 23, 59).getTime(), label: t, past: true };
+  const ms = t ? recIsoToMs(t) : null;
+  if (ms !== null) return { lo: ms, hi: ms + 86399000, label: t, past: true };
+  const now = Date.now();
+  return { lo: now, hi: now, label: '', past: false, bad: !!t };
+}
+function recServing(r, rg) {
+  const s = recStart(r), e = recEnd(r);
+  if (!rg.past && (r.archived === true && e === null)) return false;
+  return (s === null || s <= rg.hi) && (e === null || e >= rg.lo);
+}
+function recFiltered() {
+  const rg = recRange();
+  const term = document.getElementById('rc-search').value.trim().toLowerCase();
+  const dist = document.getElementById('rc-district').value;
+  return recAll().filter(r => {
+    if (_recCat !== 'all' && r.cat !== _recCat) return false;
+    if (dist && elGroupKey(r) !== dist) return false;
+    if (!recServing(r, rg)) return false;
+    if (!term) return true;
+    return [r.fullName, r.church, r.district, r.position, r.phone, r.refNo].some(x => String(x || '').toLowerCase().includes(term));
+  });
+}
+
+function startRecords() {
+  if (!_adminData) return;
+  const wide = seesAllDistricts();
+  document.getElementById('rc-dist-wrap').classList.toggle('hidden', !wide);
+  document.getElementById('rc-cat').innerHTML = REC_CATS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+  document.getElementById('rc-cat').value = _recCat;
+  paintRecLinks();
+  if (_recStarted) { renderRecords(); return; }
+  _recStarted = true;
+  const q = c => wide ? db.collection(c) : db.collection(c).where('districtKey', '==', _adminData.districtId);
+  const fail = err => { document.getElementById('rc-list').innerHTML = `<div class="empty"><div class="e-icon">⚠️</div><h3>Could not load</h3><p>${esc(err.message)}</p></div>`; };
+  _subs.push(q('elders_biodata').onSnapshot(sn => { _recE = sn.docs.map(d => ({ id: d.id, ...d.data() })); renderRecords(); }, fail));
+  _subs.push(q('people_records').onSnapshot(sn => { _recP = sn.docs.map(d => ({ id: d.id, ...d.data() })); renderRecords(); }, fail));
+}
+
+function recLink(cat) { return new URL(REC_FORM[cat], location.href).href; }
+function paintRecLinks() {
+  const box = document.getElementById('rc-links');
+  if (!isElderManager() || _recCat === 'all') { box.innerHTML = ''; return; }
+  const w = REC_WORD[_recCat].toLowerCase() + 's';
+  box.innerHTML = `<p class="dept-note" style="margin-top:10px">Send this link to the ${w}. They fill it on their phone and it comes here.</p>
+    <button class="big-btn fill" data-rl="share">📤 Share the form link</button>
+    <button class="big-btn" data-rl="wa">💬 Send on WhatsApp</button>
+    <button class="big-btn" data-rl="copy">📋 Copy the link</button>`;
+}
+document.getElementById('rc-links').addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-rl]'); if (!b) return;
+  const url = recLink(_recCat), msg = `Volta Ghana Mission: please fill in your ${REC_WORD[_recCat]} biodata form on your phone.\n` + url;
+  if (b.dataset.rl === 'wa') { window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener'); return; }
+  if (b.dataset.rl === 'share' && navigator.share) { try { await navigator.share({ title: 'Biodata form', text: msg, url }); } catch (_) {} return; }
+  try { await navigator.clipboard.writeText(url); toast('Link copied ✓', 'ok'); } catch (_) { window.prompt('Copy this link and send it:', url); }
+});
+
+function renderRecords() {
+  if (!_adminData) return;
+  const all = recAll(), rg = recRange();
+  document.getElementById('rc-title').textContent = _recCat === 'all' ? '📖 Ministerial records' : REC_CATS.find(c => c[0] === _recCat)[1].replace(/^\S+\s/, '📖 ');
+  const sel = document.getElementById('rc-district');
+  if (seesAllDistricts()) {
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">All districts</option>' + DISTRICTS.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('') + `<option value="${OTHER_KEY}">Other / Mission Office</option>`;
+    sel.value = keep; if (sel.value !== keep) sel.value = '';
+  }
+  const rows = recFiltered();
+  document.getElementById('rc-count').textContent = rg.bad ? 'Type a year like 2005 or a date like 2005-06-30.' :
+    (rg.past ? `Serving in ${rg.label}: ${rows.length}` : `${rows.length} now serving`) + (all.length ? '' : '');
+  const list = document.getElementById('rc-list');
+  if (!rows.length) { list.innerHTML = `<div class="empty"><div class="e-icon">📋</div><h3>Nobody found</h3><p>${rg.past ? 'No one is recorded as serving then.' : 'Share the form link so people can fill it.'}</p></div>`; return; }
+  const groups = {};
+  rows.forEach(r => { const k = _recCat === 'all' ? r.cat : elGroupKey(r); (groups[k] = groups[k] || []).push(r); });
+  const order = _recCat === 'all' ? ['pastor', 'shepherdess', 'officer', 'director', 'elder'] : DISTRICTS.map(d => d.id).concat(OTHER_KEY);
+  list.innerHTML = order.filter(k => groups[k]).map(k => {
+    const label = _recCat === 'all' ? REC_WORD[k] + 's' : (k === OTHER_KEY ? 'Other / Mission Office' : dName(k));
+    return `<div class="el-group">${esc(label)} <span>${groups[k].length}</span></div>` +
+      groups[k].sort((a, b) => elVal(a, 'fullName').localeCompare(elVal(b, 'fullName'))).map(r => {
+        const sub = [elVal(r, 'position') || REC_WORD[r.cat], elVal(r, 'church'), r.cat !== 'elder' || _recCat !== 'all' ? '' : '', elVal(r, 'phone')].filter(Boolean).join(' · ');
+        return `<div class="el-row" role="button" tabindex="0" data-rid="${esc(r._col)}/${esc(r.id)}"><div class="n">${esc(elVal(r, 'fullName') || '—')}${r.archived ? ' <small>(archived)</small>' : ''}</div><div class="s">${esc(sub)}</div></div>`;
+      }).join('');
+  }).join('');
+}
+
+function recFind(ref) { const [c, id] = ref.split('/'); return recAll().find(r => r._col === c && r.id === id); }
+function managerButtons(r, kind) {
+  if (!isElderManager()) return '';
+  const col = kind === 'elders' ? 'elders_biodata' : (r._col || 'people_records');
+  const a = `data-col="${col}" data-id="${esc(r.id)}"`;
+  return (r.archived ? `<button class="btn btn-primary btn-sm" data-rest ${a}>↩ Bring back</button>` :
+    `<button class="btn btn-outline btn-sm" data-arch ${a}>📦 Archive (stopped serving)</button>`) +
+    `<button class="btn btn-outline btn-sm" data-rm ${a} style="color:#b3322b;border-color:#b3322b">🗑 Remove (mistake)</button>`;
+}
+function openRec(ref) {
+  const r = recFind(ref); if (!r) return;
+  document.getElementById('mod-r-name').textContent = elVal(r, 'fullName') || REC_WORD[r.cat];
+  document.getElementById('mod-r-sub').textContent = [REC_WORD[r.cat], elVal(r, 'position'), elVal(r, 'district')].filter(Boolean).join(' · ');
+  let html = '';
+  REC_SECTIONS.forEach(([title, fields]) => {
+    const rows = fields.map(([label, f, kind]) => {
+      const v = f === 'submittedAt' ? fmtDate(r.submittedAt) : elVal(r, f);
+      if (!v || v === '—') return '';
+      const shown = kind === 'tel' ? `<a href="tel:${esc(v.replace(/[^\d+]/g, ''))}">${esc(v)}</a>` : kind === 'mail' ? `<a href="mailto:${esc(v)}">${esc(v)}</a>` : esc(v);
+      return `<div class="dl-row"><span class="k">${esc(label)}</span><span class="v">${shown}</span></div>`;
+    }).join('');
+    if (rows) html += `<div class="dl-sec">${esc(title)}</div>${rows}`;
+  });
+  document.getElementById('mod-r-body').innerHTML = html;
+  document.getElementById('mod-r-acts').innerHTML = managerButtons(r, r.cat === 'elder' ? 'elders' : 'people');
+  document.getElementById('mod-rec').classList.remove('hidden');
+}
+const closeRec = () => document.getElementById('mod-rec').classList.add('hidden');
+
+// Archive / bring back / remove (managers only; the security rules enforce this too)
+document.addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-arch],[data-rest],[data-rm]'); if (!b || !isElderManager()) return;
+  const ref = db.collection(b.dataset.col).doc(b.dataset.id);
+  try {
+    if (b.hasAttribute('data-arch')) {
+      const d = window.prompt('Date they stopped serving (year-month-day). Leave as today if they stopped now:', new Date().toISOString().slice(0, 10));
+      if (!d) return;
+      if (isNaN(Date.parse(d))) { toast('Write the date like 2024-12-31', 'err'); return; }
+      await ref.update({ archived: true, servedTo: d.trim(), archivedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      db.collection('directory').doc(b.dataset.id).set({ archived: true }, { merge: true }).catch(() => {});
+      toast('Archived ✓. They still show when you pick an earlier date.', 'ok');
+    } else if (b.hasAttribute('data-rest')) {
+      await ref.update({ archived: firebase.firestore.FieldValue.delete(), servedTo: firebase.firestore.FieldValue.delete(), archivedAt: firebase.firestore.FieldValue.delete() });
+      db.collection('directory').doc(b.dataset.id).set({ archived: firebase.firestore.FieldValue.delete() }, { merge: true }).catch(() => {});
+      toast('Brought back ✓', 'ok');
+    } else {
+      if (!window.confirm('Remove this record for good? Use this only for a mistake or a duplicate. To keep history, use Archive instead.')) return;
+      await ref.delete(); db.collection('directory').doc(b.dataset.id).delete().catch(() => {}); toast('Removed', 'ok');
+    }
+    closeRec(); closeElder();
+  } catch (e) { toast('Could not do that. Try again.', 'err'); }
+});
+
+document.getElementById('rc-back').addEventListener('click', () => adminTab('depts'));
+document.getElementById('rc-cat').addEventListener('change', e => { _recCat = e.target.value; paintRecLinks(); renderRecords(); });
+['rc-asat', 'rc-search'].forEach(i => document.getElementById(i).addEventListener('input', renderRecords));
+document.getElementById('rc-district').addEventListener('change', renderRecords);
+document.getElementById('mod-r-close').addEventListener('click', closeRec);
+document.getElementById('rc-list').addEventListener('click', ev => { const r = ev.target.closest('.el-row'); if (r) openRec(r.dataset.rid); });
+document.getElementById('rc-list').addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter' && ev.key !== ' ') return;
+  const r = ev.target.closest('.el-row'); if (r) { ev.preventDefault(); openRec(r.dataset.rid); }
+});
+document.getElementById('rc-export').addEventListener('click', () => {
+  const rows = recFiltered().sort((a, b) => a.cat.localeCompare(b.cat) || elVal(a, 'fullName').localeCompare(elVal(b, 'fullName')));
+  if (!rows.length) { toast('Nothing to export.', 'err'); return; }
+  const cols = [['Category', 'cat'], ['Name', 'fullName'], ['Position', 'position'], ['District', 'district'], ['Church', 'church'], ['Phone', 'phone'], ['WhatsApp', 'whatsapp'], ['Email', 'email'], ['Serving since', 'stationSince'], ['Stopped serving', 'servedTo'], ['Gender', 'gender'], ['Date of birth', 'dateOfBirth'], ['Reference', 'refNo']];
+  const lines = [cols.map(c => csvCell(c[0])).join(',')].concat(rows.map(r => cols.map(([, f]) => csvCell(elVal(r, f))).join(',')));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  const w = document.getElementById('rc-asat').value.trim();
+  a.download = 'vgm-records-' + (w || new Date().toISOString().slice(0, 10)) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Exported ' + rows.length, 'ok');
 });
 
 // ══════════════════════════════════════════════════════════
@@ -2344,6 +2631,369 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
   }
 })();
 
+
+// ══════════════════════════════════════════════════════════
+// FORM MAKER: build a form, share the link, collect answers
+// ══════════════════════════════════════════════════════════
+(function () {
+  const $ = id => document.getElementById(id);
+  const e = esc;
+  let me = null, back = 'dashboard', ctx = {}, view = 'list', subs = [];
+  let forms = [], cur = null, resp = [], draft = null;
+
+  const PASTORS = ['district_pastor', 'assoc_district_pastor'];
+  const isMissionRole = () => me && ['mission_admin', 'exec_secretary', 'ministerial_secretary'].includes(me.role) ||
+    (me && me.role === 'system_engineer' && !me.restricted);
+  const isPastorRole = () => me && PASTORS.includes(me.role);
+  const isLeadRole = () => me && DISTRICT_LEAD_ROLES.includes(me.role);
+
+  const TYPES = [
+    ['text', '✏️ Short answer'], ['long', '📄 Long answer'], ['phone', '📞 Phone number'],
+    ['number', '🔢 Number'], ['date', '📅 Date'], ['choice', '⚪ Choose one'], ['multi', '☑️ Choose many']
+  ];
+  const typeLabel = t => (TYPES.find(x => x[0] === t) || ['', t])[1];
+  const q = (label, type, required, options) => ({ label, type: type || 'text', required: !!required, options: options || [] });
+  const TEMPLATES = [
+    ['📝 Blank form', 'Start with nothing', '', []],
+    ['👥 Member details', 'Contact and emergency details', 'Please fill in your details so the church can reach you and help in times of need.', [
+      q('Full name', 'text', 1), q('Gender', 'choice', 1, ['Male', 'Female']), q('Date of birth', 'date'), q('Phone number', 'phone', 1),
+      q('WhatsApp number', 'phone'), q('Where you live (house or landmark)', 'text'), q('Church', 'text', 1),
+      q('Baptized?', 'choice', 0, ['Yes', 'No']), q('Year you joined the church', 'number'), q('Work or trade', 'text'),
+      q('Groups you belong to', 'multi', 0, ['Sabbath School', 'Youth', "Women's Ministries", "Men's Ministries", 'Children', 'Choir', 'Deacon or Deaconess', 'Personal Ministries', 'Health Ministries']),
+      q('Skills that could help the church (nurse, driver, builder…)', 'text'),
+      q('Emergency contact: name', 'text', 1), q('Emergency contact: relationship', 'text'), q('Emergency contact: phone', 'phone', 1),
+      q('Anything we should know in an emergency (allergy, illness)', 'long')]],
+    ['🚑 Emergency contacts', 'Short and quick', 'Please give us a number we can call if there is an emergency.', [
+      q('Full name', 'text', 1), q('Your phone number', 'phone', 1), q('Church', 'text', 1), q('Emergency contact: name', 'text', 1), q('Emergency contact: phone', 'phone', 1)]],
+    ['🎟️ Event sign-up', 'Who is coming', 'Tell us if you are coming.', [
+      q('Full name', 'text', 1), q('Phone number', 'phone', 1), q('Church', 'text', 1), q('Number of people coming', 'number', 1), q('Will you come?', 'choice', 1, ['Yes', 'Maybe', 'No'])]],
+    ['📊 Church report', 'Numbers for a week or month', 'Report from the church.', [
+      q('Church', 'text', 1), q('Your name', 'text', 1), q('Your phone number', 'phone', 1), q('Date', 'date', 1), q('Attendance', 'number', 1),
+      q('Offerings and tithe (GH₵)', 'number'), q('Visitors', 'number'), q('Baptisms', 'number'), q('Comments', 'long')]],
+    ['💬 Feedback', 'Ask for opinions', 'We would like to hear from you.', [
+      q('Your name (optional)', 'text'), q('How was it?', 'choice', 1, ['Very good', 'Good', 'Fair', 'Poor']), q('What can we do better?', 'long')]]
+  ];
+
+  const link = id => new URL('form.html?f=' + encodeURIComponent(id), location.href).href;
+  const newId = () => [...crypto.getRandomValues(new Uint8Array(10))].map(b => b.toString(16).padStart(2, '0')).join('');
+  const qid = () => 'q' + Math.random().toString(36).slice(2, 8);
+
+  function stop() { subs.forEach(f => { try { f(); } catch (_) {} }); subs = []; }
+
+  window.openForms = function (user, c, from) {
+    me = user; ctx = c || {}; back = from || 'dashboard'; view = 'list'; cur = null; draft = null;
+    stop(); loadList(); show('forms'); render();
+  };
+
+  function loadList() {
+    const col = db.collection('forms');
+    let query = col.where('ownerId', '==', me.uid);
+    if (isMissionRole()) query = col;
+    else if (isPastorRole() && me.districtId) query = col.where('districtId', '==', me.districtId);
+    const on = (qy, fallback) => qy.onSnapshot(sn => {
+      forms = sn.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (cur) cur = forms.find(f => f.id === cur.id) || cur;
+      render();
+    }, err => {
+      if (fallback && err.code === 'permission-denied') { subs.forEach(f => { try { f(); } catch (_) {} }); subs = []; subs.push(on(col.where('ownerId', '==', me.uid), false)); }
+      else { forms = []; render(); }
+    });
+    subs.push(on(query, query !== undefined && isMissionRole()));
+  }
+
+  function myLevel() {
+    if (ctx.deptId && isMissionRole()) return 'department';
+    if (isMissionRole()) return 'mission';
+    if (isLeadRole()) return 'district';
+    return 'church';
+  }
+  const LEVEL_TXT = { mission: '🏛️ Mission', department: '🏢 Department', district: '⛪ District', church: '🏠 Church' };
+
+  // ── Rendering ────────────────────────────────────────────
+  function render() {
+    const body = $('forms-body'); if (!body || $('screen-forms').classList.contains('hidden')) return;
+    $('forms-title').textContent = ctx.deptName ? '📝 Forms · ' + ctx.deptName : '📝 Forms';
+    if (view === 'list') return renderList(body);
+    if (view === 'build') return renderBuild(body);
+    if (view === 'results') return renderResults(body);
+  }
+
+  function renderList(body) {
+    let rows = forms.slice();
+    if (ctx.deptId) rows = rows.filter(f => f.deptId === ctx.deptId);
+    rows.sort((a, b) => ((b.createdAt && b.createdAt.seconds) || 0) - ((a.createdAt && a.createdAt.seconds) || 0));
+    let h = `<button class="big-btn fill" id="fm-new">➕ Make a new form</button>`;
+    if (!rows.length) h += `<div class="empty"><div class="e-icon">📝</div><h3>No forms yet</h3><p>Tap “Make a new form”, add your questions, then share the link.</p></div>`;
+    h += rows.map(f => `<div class="el-row" role="button" tabindex="0" data-open="${e(f.id)}">
+      <div class="n">${e(f.title)} ${f.status === 'closed' ? '<small>(closed)</small>' : ''}</div>
+      <div class="s">${e(LEVEL_TXT[f.level] || '')}${f.deptName ? ' · ' + e(f.deptName) : ''}${f.ownerName ? ' · ' + e(f.ownerName) : ''}</div></div>`).join('');
+    body.innerHTML = h;
+  }
+
+  function startDraft(t) {
+    draft = {
+      title: t ? t[0].replace(/^\S+\s/, '') : '', description: t ? t[2] : '', onePerPhone: false,
+      fields: (t ? t[3] : []).map(x => Object.assign({ id: qid() }, JSON.parse(JSON.stringify(x))))
+    };
+    if (t && t[0].startsWith('📝')) draft.title = '';
+    view = 'build'; render();
+  }
+
+  function renderBuild(body) {
+    let h = '';
+    if (!draft) {
+      h = `<p class="dept-note">What kind of form do you want to make?</p>` +
+        TEMPLATES.map((t, i) => `<button class="tile" data-tpl="${i}"><span class="ic">${t[0].split(' ')[0]}</span><span>${e(t[0].replace(/^\S+\s/, ''))}<small>${e(t[1])}</small></span></button>`).join('');
+      body.innerHTML = h; return;
+    }
+    h += `<div class="field"><label class="fm-l">Name of the form</label><input id="fm-title" maxlength="120" value="${e(draft.title)}" placeholder="e.g. Youth camp sign-up"></div>
+      <div class="field"><label class="fm-l">A few words for the people filling it (optional)</label><textarea id="fm-desc" maxlength="1000" rows="3">${e(draft.description)}</textarea></div>`;
+    draft.fields.forEach((f, i) => {
+      const hasOpts = f.type === 'choice' || f.type === 'multi';
+      h += `<div class="fm-q" data-i="${i}">
+        <div class="fm-row"><b>${i + 1}.</b>
+          <input class="fm-label" data-k="label" maxlength="150" value="${e(f.label)}" placeholder="Write the question">
+        </div>
+        <div class="fm-row">
+          <select data-k="type">${TYPES.map(([k, l]) => `<option value="${k}"${k === f.type ? ' selected' : ''}>${l}</option>`).join('')}</select>
+          <label class="fm-chk"><input type="checkbox" data-k="required"${f.required ? ' checked' : ''}> Must answer</label>
+        </div>
+        ${hasOpts ? `<textarea data-k="options" rows="4" placeholder="Write each choice on its own line">${e((f.options || []).join('\n'))}</textarea>` : ''}
+        <div class="fm-row fm-act"><button type="button" data-mv="-1">⬆</button><button type="button" data-mv="1">⬇</button><button type="button" data-rmq>🗑 Remove</button></div>
+      </div>`;
+    });
+    h += `<p class="dept-note" style="margin-top:12px">Add a question:</p><div class="fm-add">` +
+      TYPES.map(([k, l]) => `<button type="button" data-add="${k}">${l}</button>`).join('') + `</div>
+      <label class="fm-chk" style="margin:14px 0"><input type="checkbox" id="fm-once"${draft.onePerPhone ? ' checked' : ''}> One answer per phone number (stops repeats). Needs a “Phone number” question that must be answered.</label>
+      <button class="big-btn fill" id="fm-save">💾 Save the form</button>`;
+    body.innerHTML = h;
+  }
+
+  const open = (id) => { cur = forms.find(f => f.id === id); if (!cur) return; view = 'results'; resp = []; stop(); loadList();
+    subs.push(db.collection('forms').doc(id).collection('responses').onSnapshot(sn => { resp = sn.docs.map(d => ({ id: d.id, ...d.data() })); render(); }, () => { resp = []; render(); }));
+    render(); };
+
+  function parse(r) { try { return JSON.parse(r.answersJson) || {}; } catch (_) { return {}; } }
+  const fmtAns = a => Array.isArray(a) ? a.join(', ') : (a == null ? '' : String(a));
+  const canManage = f => me && (f.ownerId === me.uid || isMissionRole() && me.role !== 'ministerial_secretary' && me.role !== 'exec_secretary' || (isPastorRole() && f.districtId === me.districtId));
+
+  function renderResults(body) {
+    const f = cur; if (!f) { view = 'list'; return render(); }
+    const url = link(f.id);
+    let h = `<h3 style="margin:4px 0">${e(f.title)}</h3>
+      <p class="dept-note">${e(LEVEL_TXT[f.level] || '')}${f.deptName ? ' · ' + e(f.deptName) : ''} · ${f.status === 'open' ? '🟢 Open' : '🔴 Closed'}</p>
+      <button class="big-btn fill" data-sh="share">📤 Share the form link</button>
+      <button class="big-btn" data-sh="wa">💬 Send on WhatsApp</button>
+      <button class="big-btn" data-sh="copy">📋 Copy the link</button>`;
+    if (canManage(f)) h += `<button class="big-btn" data-toggle>${f.status === 'open' ? '🔒 Stop taking answers' : '🔓 Open again'}</button>
+      <button class="big-btn" data-copyas>🧬 Make a copy to change</button>`;
+    h += `<div class="el-stats"><div class="el-stat"><b>${resp.length}</b><span>Answers</span></div></div>
+      <div class="el-actions"><button class="btn btn-primary btn-sm" data-csv>⬇ Download answers (Excel)</button></div>`;
+    const rows = resp.slice().sort((a, b) => ((b.submittedAt && b.submittedAt.seconds) || 0) - ((a.submittedAt && a.submittedAt.seconds) || 0));
+    if (!rows.length) h += `<div class="empty"><div class="e-icon">⏳</div><h3>No answers yet</h3><p>Share the link and the answers will appear here.</p></div>`;
+    h += rows.slice(0, 200).map(r => {
+      const a = parse(r);
+      return `<div class="fm-resp">${(f.fields || []).map(x => { const v = fmtAns(a[x.id]); return v ? `<div class="dl-row"><span class="k">${e(x.label)}</span><span class="v">${e(v)}</span></div>` : ''; }).join('')}
+        <div class="dl-row"><span class="k">Sent</span><span class="v">${e(fmtDate(r.submittedAt))}</span></div>
+        ${canManage(f) || isMissionRole() ? `<button class="btn btn-outline btn-sm" data-delr="${e(r.id)}" style="margin-top:6px">🗑 Remove this answer</button>` : ''}</div>`;
+    }).join('');
+    if (rows.length > 200) h += `<p class="dept-note">Showing the newest 200. Download the file to get all ${rows.length}.</p>`;
+    if (canManage(f)) h += `<button class="big-btn" data-delform style="color:#b3322b;border-color:#b3322b;margin-top:16px">🗑 Delete this form and its answers</button>`;
+    body.innerHTML = h;
+  }
+
+  // ── Actions ──────────────────────────────────────────────
+  function syncDraft() {
+    if (!draft) return;
+    const t = $('fm-title'); if (t) draft.title = t.value;
+    const d = $('fm-desc'); if (d) draft.description = d.value;
+    const o = $('fm-once'); if (o) draft.onePerPhone = o.checked;
+    document.querySelectorAll('.fm-q').forEach(box => {
+      const f = draft.fields[+box.dataset.i]; if (!f) return;
+      box.querySelectorAll('[data-k]').forEach(el => {
+        const k = el.dataset.k;
+        if (k === 'required') f.required = el.checked;
+        else if (k === 'options') f.options = el.value.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 20);
+        else f[k] = el.value;
+      });
+    });
+  }
+
+  async function save() {
+    syncDraft();
+    const title = draft.title.trim();
+    if (title.length < 2) return toast('Write the name of the form.', 'err');
+    const fields = draft.fields.map(f => ({
+      id: f.id, label: String(f.label || '').trim().slice(0, 150), type: f.type, required: !!f.required,
+      options: (f.type === 'choice' || f.type === 'multi') ? (f.options || []).map(o => o.slice(0, 80)).slice(0, 20) : []
+    }));
+    if (!fields.length) return toast('Add at least one question.', 'err');
+    if (fields.some(f => f.label.length < 1)) return toast('Every question needs words.', 'err');
+    if (fields.some(f => (f.type === 'choice' || f.type === 'multi') && f.options.length < 2)) return toast('Choice questions need at least two choices.', 'err');
+    if (draft.onePerPhone && !fields.some(f => f.type === 'phone' && f.required)) return toast('Add a phone question that must be answered, or turn off “one answer per phone”.', 'err');
+    const level = myLevel();
+    if (!me.districtId && (level === 'district' || level === 'church')) return toast('Your account has no district yet. Ask your District Pastor.', 'err');
+    const ts = firebase.firestore.FieldValue.serverTimestamp();
+    const doc = {
+      title, description: draft.description.trim().slice(0, 1000), level, ownerId: me.uid,
+      ownerName: String(me.displayName || me.email || '').slice(0, 120),
+      districtId: (level === 'district' || level === 'church') ? me.districtId : null,
+      churchId: level === 'church' ? (me.churchId || 'none') : null,
+      deptId: level === 'department' ? ctx.deptId : null, deptName: level === 'department' ? String(ctx.deptName || '').slice(0, 120) : null,
+      fields, status: 'open', onePerPhone: !!draft.onePerPhone, createdAt: ts, updatedAt: ts
+    };
+    const id = newId();
+    try {
+      await db.collection('forms').doc(id).set(doc);
+      toast('Form saved ✓ Now share the link.', 'ok');
+      draft = null; cur = { id, ...doc }; view = 'results'; stop(); loadList();
+      subs.push(db.collection('forms').doc(id).collection('responses').onSnapshot(sn => { resp = sn.docs.map(d => ({ id: d.id, ...d.data() })); render(); }, () => {}));
+      render();
+    } catch (err) { toast('Could not save. ' + (err.code === 'permission-denied' ? 'Your account may not be allowed to make this kind of form.' : 'Try again.'), 'err'); }
+  }
+
+  function csv() {
+    const f = cur; const cols = [['Sent', null]].concat((f.fields || []).map(x => [x.label, x.id]));
+    const lines = [cols.map(c => csvCell(c[0])).join(',')].concat(resp.map(r => { const a = parse(r); return cols.map(([, k]) => csvCell(k ? fmtAns(a[k]) : fmtDate(r.submittedAt))).join(','); }));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'vgm-form-' + f.title.replace(/[^A-Za-z0-9]+/g, '-').slice(0, 40) + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  $('screen-forms').addEventListener('input', ev => { if (view === 'build') syncDraft(); });
+  $('screen-forms').addEventListener('change', ev => {
+    if (view !== 'build') return;
+    syncDraft();
+    if (ev.target.matches('select[data-k="type"]')) render();
+  });
+  $('screen-forms').addEventListener('click', async ev => {
+    const t = ev.target;
+    const btn = sel => t.closest(sel);
+    if (btn('#fm-new')) { draft = null; view = 'build'; render(); return; }
+    if (btn('[data-tpl]')) { startDraft(TEMPLATES[+btn('[data-tpl]').dataset.tpl]); return; }
+    if (btn('[data-open]')) { open(btn('[data-open]').dataset.open); return; }
+    if (view === 'build' && draft) {
+      if (btn('[data-add]')) { syncDraft(); const ty = btn('[data-add]').dataset.add; draft.fields.push({ id: qid(), label: '', type: ty, required: false, options: [] }); render(); window.scrollTo(0, document.body.scrollHeight); return; }
+      if (btn('[data-rmq]')) { syncDraft(); draft.fields.splice(+btn('.fm-q').dataset.i, 1); render(); return; }
+      if (btn('[data-mv]')) { syncDraft(); const i = +btn('.fm-q').dataset.i, j = i + +btn('[data-mv]').dataset.mv; if (j >= 0 && j < draft.fields.length) { const x = draft.fields.splice(i, 1)[0]; draft.fields.splice(j, 0, x); } render(); return; }
+      if (btn('#fm-save')) { await save(); return; }
+    }
+    if (view === 'results' && cur) {
+      const sh = btn('[data-sh]');
+      if (sh) {
+        const url = link(cur.id), msg = `Volta Ghana Mission: please fill in this form on your phone: ${cur.title}\n${url}`;
+        if (sh.dataset.sh === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+        else if (sh.dataset.sh === 'share' && navigator.share) { try { await navigator.share({ title: cur.title, text: msg, url }); } catch (_) {} }
+        else { try { await navigator.clipboard.writeText(url); toast('Link copied ✓', 'ok'); } catch (_) { window.prompt('Copy this link and send it:', url); } }
+        return;
+      }
+      if (btn('[data-csv]')) { csv(); return; }
+      if (btn('[data-toggle]')) {
+        try { await db.collection('forms').doc(cur.id).update({ status: cur.status === 'open' ? 'closed' : 'open', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); toast('Done ✓', 'ok'); }
+        catch (_) { toast('Could not change it.', 'err'); }
+        return;
+      }
+      if (btn('[data-copyas]')) { draft = { title: cur.title + ' (copy)', description: cur.description || '', onePerPhone: !!cur.onePerPhone, fields: (cur.fields || []).map(f => Object.assign({}, f, { id: qid() })) }; view = 'build'; render(); return; }
+      const dr = btn('[data-delr]');
+      if (dr && window.confirm('Remove this answer?')) { try { await db.collection('forms').doc(cur.id).collection('responses').doc(dr.dataset.delr).delete(); } catch (_) { toast('Could not remove.', 'err'); } return; }
+      if (btn('[data-delform]') && window.confirm('Delete this form and all its answers for good?')) {
+        try {
+          const sn = await db.collection('forms').doc(cur.id).collection('responses').get();
+          for (const d of sn.docs) await d.ref.delete();
+          await db.collection('forms').doc(cur.id).delete();
+          toast('Deleted', 'ok'); cur = null; view = 'list'; stop(); loadList(); render();
+        } catch (_) { toast('Could not delete.', 'err'); }
+        return;
+      }
+    }
+  });
+  $('screen-forms').addEventListener('keydown', ev => {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    const r = ev.target.closest('[data-open]'); if (r) { ev.preventDefault(); open(r.dataset.open); }
+  });
+  $('forms-back').addEventListener('click', () => {
+    if (view === 'list') { stop(); show(back); return; }
+    if (view === 'build' && draft) { draft = null; render(); return; }
+    cur = null; draft = null; view = 'list'; stop(); loadList(); render();
+  });
+})();
+
+// ══════════════════════════════════════════════════════════
+// DIRECTORY: names and phone numbers only.
+// Open to elders, pastors and Mission officials. Full biodata stays locked.
+// ══════════════════════════════════════════════════════════
+(function () {
+  const $ = id => document.getElementById(id);
+  let me = null, back = 'dashboard', rows = [], unsub = null;
+  const KINDS = [['', 'Everyone'], ['elder', '👴 Elders'], ['pastor', '🙏 Pastors'], ['shepherdess', '👩 Shepherdesses'], ['officer', '🏛️ Officers'], ['director', '🧭 Directors']];
+  const WORD = { elder: 'Elder', pastor: 'Pastor', shepherdess: 'Shepherdess', officer: 'Officer', director: 'Director' };
+  const READERS = MISSION_ROLES.concat(DISTRICT_LEAD_ROLES, ['church_elder', 'elder']);
+  window.canSeeDirectory = role => READERS.includes(role);
+  const canFill = () => me && (['mission_admin', 'ministerial_secretary'].includes(me.role) || (me.role === 'system_engineer' && !me.restricted));
+
+  window.openDirectory = function (user, from) {
+    me = user; back = from || 'dashboard';
+    $('dir-kind').innerHTML = KINDS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+    $('dir-fill').classList.toggle('hidden', !canFill());
+    if (unsub) { try { unsub(); } catch (_) {} }
+    $('dir-list').innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)">Loading…</div>';
+    unsub = db.collection('directory').onSnapshot(sn => { rows = sn.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => !r.archived); render(); },
+      err => { $('dir-list').innerHTML = `<div class="empty"><div class="e-icon">⚠️</div><h3>Could not load</h3><p>${esc(err.message)}</p></div>`; });
+    show('dir'); render();
+  };
+
+  function render() {
+    const term = $('dir-search').value.trim().toLowerCase(), digits = term.replace(/\D/g, '');
+    const kind = $('dir-kind').value;
+    const keep = $('dir-district').value;
+    const counts = {}; rows.forEach(r => { const k = DISTRICTS.some(d => d.id === r.districtKey) ? r.districtKey : '__other'; counts[k] = (counts[k] || 0) + 1; });
+    $('dir-district').innerHTML = '<option value="">All districts</option>' + DISTRICTS.map(d => `<option value="${d.id}">${esc(d.name)} (${counts[d.id] || 0})</option>`).join('') + (counts.__other ? `<option value="__other">Other / Mission Office (${counts.__other})</option>` : '');
+    $('dir-district').value = keep; if ($('dir-district').value !== keep) $('dir-district').value = '';
+    const dist = $('dir-district').value;
+    const list = rows.filter(r => {
+      if (kind && r.kind !== kind) return false;
+      const k = DISTRICTS.some(d => d.id === r.districtKey) ? r.districtKey : '__other';
+      if (dist && k !== dist) return false;
+      if (!term) return true;
+      return [r.fullName, r.church, r.district, r.position].some(x => String(x || '').toLowerCase().includes(term)) ||
+        (digits.length >= 3 && String(r.phone || '').replace(/\D/g, '').includes(digits));
+    }).sort((a, b) => String(a.fullName).localeCompare(String(b.fullName)));
+    $('dir-count').textContent = rows.length ? `${list.length} of ${rows.length}` : '';
+    if (!rows.length) { $('dir-list').innerHTML = `<div class="empty"><div class="e-icon">📒</div><h3>Nothing here yet</h3><p>Names appear here when elders, pastors and officers fill their forms.</p></div>`; return; }
+    if (!list.length) { $('dir-list').innerHTML = `<div class="empty"><div class="e-icon">🔍</div><h3>No match</h3></div>`; return; }
+    $('dir-list').innerHTML = list.slice(0, 300).map(r => {
+      const tel = String(r.phone || '').replace(/[^\d+]/g, '');
+      const wa = tel.replace(/^\+/, '').replace(/^0/, '233');
+      const sub = [WORD[r.kind], r.position, r.church, r.district].filter(Boolean).join(' · ');
+      return `<div class="dir-card"><div class="n">${esc(r.fullName)}</div><div class="s">${esc(sub)}</div>
+        <div class="dir-btns"><a class="btn btn-primary btn-sm" href="tel:${esc(tel)}">📞 ${esc(r.phone)}</a>
+        <a class="btn btn-outline btn-sm" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">💬 WhatsApp</a></div></div>`;
+    }).join('') + (list.length > 300 ? '<p class="dept-note">Showing the first 300. Type a name to find others.</p>' : '');
+  }
+
+  // One-time fill: copy names and phones of records that were sent before the directory existed
+  async function fill() {
+    if (!canFill() || !window.confirm('Add everyone who already filled a form to the directory?')) return;
+    try {
+      const [a, b] = await Promise.all([db.collection('elders_biodata').get(), db.collection('people_records').get()]);
+      const items = [];
+      a.docs.forEach(d => { const v = d.data(); items.push([d.id, { kind: 'elder', fullName: v.fullName || '', phone: v.phone || '', church: v.church || '', district: v.district || '', districtKey: v.districtKey || '', position: '', phoneKey: v.phoneKey || '' }]); });
+      b.docs.forEach(d => { const v = d.data(); items.push([d.id, { kind: v.category, fullName: v.fullName || '', phone: v.phone || '', church: v.church || '', district: v.district || '', districtKey: v.districtKey || '', position: v.position || '', phoneKey: v.phoneKey || '' }]); });
+      for (let i = 0; i < items.length; i += 400) {
+        const batch = db.batch();
+        items.slice(i, i + 400).forEach(([id, data]) => batch.set(db.collection('directory').doc(id), data, { merge: true }));
+        await batch.commit();
+      }
+      toast('Directory filled: ' + items.length + ' people ✓', 'ok');
+    } catch (err) { toast('Could not fill the directory.', 'err'); }
+  }
+
+  $('dir-back').addEventListener('click', () => { if (unsub) { try { unsub(); } catch (_) {} unsub = null; } show(back); });
+  ['dir-search'].forEach(i => $(i).addEventListener('input', render));
+  ['dir-kind', 'dir-district'].forEach(i => $(i).addEventListener('change', render));
+  $('dir-fill').addEventListener('click', fill);
+})();
 </script>
 </body>
 </html>
