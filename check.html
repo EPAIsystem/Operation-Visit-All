@@ -45,7 +45,22 @@ $('#test').onclick=async()=>{
   const dir={kind:'elder',fullName:rec.fullName,phone:rec.phone,church:rec.church,district:rec.district,districtKey:rec.districtKey,position:'',phoneKey};
   try{ const b=db.batch(); b.set(db.collection('elders_biodata').doc(id),rec); b.set(db.collection('directory').doc(id),dir); await b.commit(); add(true,'The form was received, with its directory entry. Everything is working.'); return; }
   catch(e){ add(false,'Sending both together failed: '+(e.code||e.message)); }
-  try{ await db.collection('elders_biodata').doc(id).set(rec); add(true,'The elder record alone was accepted. So the directory rules are the problem: paste and publish the newest rules.'); }
-  catch(e){ add(false,'The elder record alone failed: '+(e.code||e.message)+'. Either a test record already exists (then it is fine, remove it in the app and try again), or the published rules do not match this form.'); }
+  try{ await db.collection('elders_biodata').doc(id).set(rec); add(true,'The elder record alone was accepted. So the directory rules are the problem: paste and publish the newest rules.'); return; }
+  catch(e){ add(false,'The elder record alone failed: '+(e.code||e.message)); }
+  // Find which detail the rules dislike: change one thing at a time
+  const tries=[
+    ['plain letters in the name', {fullName:'TEST delete me'}],
+    ['children number 0', {childrenCount:0}],
+    ['another reference number', {refNo:'ELD-ABCD1234'}],
+    ['another secret key', {editKey:'abcdefabcdefabcdefabcdef'}],
+    ['another phone number', {phone:'0244 000 000', phoneKey:'244000000'}],
+    ['all of these together', {fullName:'TEST delete me', childrenCount:0, refNo:'ELD-ABCD1234', editKey:'abcdefabcdefabcdefabcdef', phone:'0244 000 000', phoneKey:'244000000'}]
+  ];
+  for(const [label,mods] of tries){
+    const r=Object.assign({},rec,mods); const rid='ph_'+r.phoneKey;
+    try{ await db.collection('elders_biodata').doc(rid).set(r); add(true,'Accepted when I used: '+label+'. Send me this line.'); return; }
+    catch(e){ add(false,'Still refused with: '+label+' ('+(e.code||e.message)+')'); }
+  }
+  add(false,'Every version was refused. The rules in Firebase are not the ones I sent, or something else is off. Send me a screenshot of this page.');
 };
 </script></body></html>
