@@ -520,13 +520,13 @@ body {
   <div class="pending-box">
     <div class="pending-anim">⏳</div>
     <h2>Registration Submitted</h2>
-    <p class="info-note">Your account is awaiting approval from your District Pastor.<br>You will be redirected automatically once approved.</p>
+    <p class="info-note" id="pending-who">Your account is awaiting approval from your District Pastor.<br>You will be redirected automatically once approved.</p>
     <div class="info-card" id="pending-info"></div>
     <p class="info-note" id="verify-note">Already used the old VGM app? We sent a link to your email. Open it, then tap the button below and you will be let in with your old role.</p>
     <button class="btn" id="btn-verified">I have verified my email</button>
     <button class="btn btn-outline" id="btn-resend" style="margin-top:8px">Send the link again</button>
     <div class="info-note" id="verify-msg"></div>
-    <p class="info-note">Not approved after 24 hours? Contact your District Pastor directly.</p>
+    <p class="info-note">Not approved after 24 hours? Contact your approver directly.</p>
     <button class="btn btn-outline" id="btn-so-pending">Sign Out</button>
   </div>
 </div>
@@ -718,6 +718,7 @@ const DISTRICTS = [
   { id: 'dzodze', name: 'Dzodze District' },
 ];
 
+const MISSION_ROLES = ['mission_admin','system_engineer','exec_secretary'];
 const ROLE_LABELS = {
   mission_admin: 'Mission Admin',
   system_engineer: 'System Engineer',
@@ -869,7 +870,7 @@ function onUser(user) {
         renderRejected(data); show('rejected');
 
       } else if (data.status === 'approved') {
-        const isAdmin = ['mission_admin','system_engineer','district_pastor','assoc_district_pastor'].includes(data.role);
+        const isAdmin = ['mission_admin','system_engineer','exec_secretary','district_pastor','assoc_district_pastor'].includes(data.role);
         if (isAdmin) { renderAdmin(data); show('admin'); }
         else         { renderDashboard(data); show('dashboard'); }
 
@@ -1047,6 +1048,10 @@ document.getElementById('btn-reg').addEventListener('click', async () => {
 // PENDING SCREEN
 // ══════════════════════════════════════════════════════════
 function renderPending(data) {
+  var w = document.getElementById('pending-who');
+  if (w) w.innerHTML = (data.districtId === 'mission'
+    ? 'Your account is awaiting approval from the Mission Admin.'
+    : 'Your account is awaiting approval from your District Pastor.') + '<br>You will be redirected automatically once approved.';
   const box = document.getElementById('pending-info');
   box.innerHTML = '';
   [
@@ -1090,7 +1095,7 @@ function renderDashboard(data) {
 function renderAdmin(data) {
   _adminData = data;
   document.getElementById('a-title').textContent =
-    data.role === 'mission_admin' ? 'Mission Admin Panel' : 'District Pastor Panel';
+    MISSION_ROLES.includes(data.role) ? 'Mission Panel · ' + rName(data.role) : 'District Pastor Panel';
   document.getElementById('a-sub').textContent =
     (data.displayName || '') + ' · ' + dName(data.districtId);
 
@@ -1100,7 +1105,7 @@ function renderAdmin(data) {
   // NOTE: This compound query needs a Firestore composite index on
   // (status ASC, districtId ASC) — Firebase Console will show a link
   // to create it automatically on first run.
-  if (data.role === 'district_pastor') {
+  if (!MISSION_ROLES.includes(data.role)) {
     q = q.where('districtId', '==', data.districtId);
   }
 
@@ -1186,7 +1191,7 @@ async function loadAllUsers() {
 
   try {
     let q = db.collection('users').orderBy('createdAt', 'desc');
-    if (_adminData?.role === 'district_pastor') {
+    if (!MISSION_ROLES.includes(_adminData?.role)) {
       q = db.collection('users')
         .where('districtId', '==', _adminData.districtId)
         .orderBy('createdAt', 'desc');
@@ -1221,6 +1226,19 @@ async function loadAllUsers() {
           <div class="u-meta-item"><span class="u-meta-lbl">Joined</span><span class="u-meta-val">${fmtDate(u.createdAt)}</span></div>
         </div>
       `;
+      // Only the President can restrict or restore the System Engineer
+      if (_adminData && _adminData.role === 'mission_admin' && u.role === 'system_engineer' && u.status === 'approved') {
+        const b = document.createElement('button');
+        b.className = 'btn btn-outline btn-sm';
+        b.style.marginTop = '10px';
+        b.textContent = u.restricted ? 'Restore full access' : 'Restrict access';
+        b.addEventListener('click', async () => {
+          if (!confirm((u.restricted ? 'Restore full access for ' : 'Restrict ') + (u.displayName || 'this engineer') + '?')) return;
+          try { await db.collection('users').doc(u.id || u.uid).update({ restricted: !u.restricted }); toast('Updated', 'ok'); loadAllUsers(); }
+          catch (e) { toast('Could not update.', 'err'); }
+        });
+        card.appendChild(b);
+      }
       list.appendChild(card);
     });
   } catch (e) {
@@ -1283,7 +1301,7 @@ function elTime(e) {
 
 function startElders() {
   if (!_adminData) return;
-  const isAdmin = _adminData.role === 'mission_admin';
+  const isAdmin = MISSION_ROLES.includes(_adminData.role);
   document.getElementById('el-dist-wrap').classList.toggle('hidden', !isAdmin);
   if (_eldersUnsub) { renderElders(); return; }
 
@@ -1321,7 +1339,7 @@ function elFiltered() {
 }
 
 function renderElders() {
-  const isAdmin = _adminData && _adminData.role === 'mission_admin';
+  const isAdmin = _adminData && MISSION_ROLES.includes(_adminData.role);
 
   // Stats (always for everything this user can see)
   const week = Date.now() - 7 * 24 * 3600 * 1000;
