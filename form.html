@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Volta Ghana Mission Form</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0b4f6c">
+<style>
+:root{--paper:#f2f7fa;--card:#fff;--ink:#0f2230;--muted:#4f6b7c;--line:#c5d8e4;--blue:#0e5a87;--dk:#08304d;--err:#b3322b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px 48px}
+.wrap{max-width:620px;margin:0 auto}
+header{background:var(--blue);color:#fff;margin:0 -16px 16px;padding:18px 16px}
+header small{opacity:.85;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+header h1{margin:4px 0 0;font-size:24px;overflow-wrap:anywhere}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.desc{white-space:pre-wrap;color:var(--muted);margin:0 0 12px}
+.f{margin-bottom:14px}
+label.q{display:block;font-weight:600;margin-bottom:5px}
+.req::after{content:" *";color:var(--err)}
+input[type=text],input[type=tel],input[type=number],input[type=date],textarea{width:100%;font:inherit;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{min-height:96px}
+input:focus,textarea:focus{outline:3px solid #9cc5e0}
+.opt{display:flex;gap:10px;align-items:center;min-height:48px;padding:6px 12px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:6px;background:#fff}
+.opt input{width:22px;height:22px;flex:none}
+.invalid .e{display:block}.e{display:none;color:var(--err);font-size:13px;margin-top:3px}
+.invalid input[type=text],.invalid input[type=tel],.invalid input[type=number],.invalid input[type=date],.invalid textarea{border-color:var(--err)}
+button{font:600 18px system-ui;min-height:54px;width:100%;border-radius:12px;border:2px solid var(--blue);background:var(--blue);color:#fff;margin-top:6px}
+button[disabled]{opacity:.6}
+.msg{padding:12px;border-radius:10px;border:1.5px solid var(--err);color:var(--err);margin:12px 0;display:none}
+.msg.on{display:block}
+.big{text-align:center;padding:30px 10px}
+.foot{color:var(--muted);font-size:13px;margin-top:20px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><small>Seventh-day Adventist Church · Volta Ghana Mission</small><h1 id="title">Form</h1></header>
+<div id="state" class="card big">Loading…</div>
+<form id="f" class="hide" novalidate>
+  <div class="card"><p class="desc" id="desc"></p><div id="qs"></div></div>
+  <div class="msg" id="msg" role="alert"></div>
+  <button type="submit" id="btn">Send</button>
+</form>
+<p class="foot">Your answers go only to the church officers who asked for this form.</p>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const id = (new URLSearchParams(location.search).get("f") || "").replace(/[^A-Za-z0-9_-]/g, "");
+const CFG = window.VGM_FIREBASE_CONFIG || {};
+let db = null, form = null;
+if (CFG.apiKey && window.firebase) { try { firebase.initializeApp(CFG); db = firebase.firestore(); } catch (e) {} }
+const state = t => { $("#state").classList.remove("hide"); $("#state").textContent = t; };
+
+async function load() {
+  if (!id || !db) { state("This link is not complete. Please ask the person who sent it for the correct link."); return; }
+  try {
+    const snap = await db.collection("forms").doc(id).get();
+    if (!snap.exists) { state("This form was not found. It may have been removed."); return; }
+    form = snap.data();
+  } catch (e) { state("The form could not be opened. Check your internet and try again."); return; }
+  $("#title").textContent = form.title; document.title = form.title;
+  if (form.status !== "open") { state("This form is closed. Thank you."); return; }
+  $("#desc").textContent = form.description || ""; $("#desc").style.display = form.description ? "" : "none";
+  $("#qs").innerHTML = (form.fields || []).map(q => {
+    const lab = '<label class="q' + (q.required ? " req" : "") + '" for="' + esc(q.id) + '">' + esc(q.label) + "</label>";
+    let inp = "";
+    if (q.type === "long") inp = '<textarea id="' + esc(q.id) + '" name="' + esc(q.id) + '" maxlength="1000"></textarea>';
+    else if (q.type === "choice") inp = (q.options || []).map(o => '<label class="opt"><input type="radio" name="' + esc(q.id) + '" value="' + esc(o) + '"><span>' + esc(o) + "</span></label>").join("");
+    else if (q.type === "multi") inp = (q.options || []).map(o => '<label class="opt"><input type="checkbox" name="' + esc(q.id) + '" value="' + esc(o) + '"><span>' + esc(o) + "</span></label>").join("");
+    else {
+      const t = q.type === "phone" ? "tel" : q.type === "number" ? "number" : q.type === "date" ? "date" : "text";
+      inp = '<input id="' + esc(q.id) + '" name="' + esc(q.id) + '" type="' + t + '" maxlength="200"' + (q.type === "phone" ? ' inputmode="tel" placeholder="0244 123 456"' : "") + (q.type === "number" ? ' inputmode="decimal"' : "") + ">";
+    }
+    return '<div class="f" data-q="' + esc(q.id) + '">' + lab + inp + '<span class="e">Please answer this.</span></div>';
+  }).join("");
+  $("#state").classList.add("hide"); $("#f").classList.remove("hide");
+}
+
+function answerOf(q) {
+  const els = [...document.getElementsByName(q.id)];
+  if (q.type === "choice") { const c = els.find(e => e.checked); return c ? c.value : ""; }
+  if (q.type === "multi") return els.filter(e => e.checked).map(e => e.value);
+  return (els[0] ? els[0].value : "").trim().replace(/\s+/g, " ");
+}
+const empty = a => Array.isArray(a) ? a.length === 0 : a === "";
+const phoneOk = v => { const n = String(v).replace(/\D/g, ""); return n.length >= 9 && n.length <= 15 && /^[\d+\s()-]+$/.test(v); };
+const showMsg = t => { const m = $("#msg"); m.textContent = t; m.classList.add("on"); m.scrollIntoView({ behavior: "smooth", block: "center" }); };
+
+$("#f").addEventListener("input", () => document.querySelectorAll(".invalid").forEach(x => x.classList.remove("invalid")));
+$("#f").addEventListener("submit", async ev => {
+  ev.preventDefault(); $("#msg").classList.remove("on");
+  const answers = {}; let first = null, phoneKey = "";
+  (form.fields || []).forEach(q => {
+    const a = answerOf(q); answers[q.id] = a;
+    let bad = q.required && empty(a);
+    if (!bad && q.type === "phone" && !empty(a) && !phoneOk(a)) bad = true;
+    if (bad) { const f = document.querySelector('[data-q="' + q.id + '"]'); f.classList.add("invalid"); first = first || f; }
+    if (q.type === "phone" && !phoneKey && !empty(a) && phoneOk(a)) phoneKey = String(a).replace(/\D/g, "").slice(-9);
+  });
+  if (first) { first.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  if (form.onePerPhone && phoneKey.length !== 9) { showMsg("Please write your phone number in full."); return; }
+  const json = JSON.stringify(answers);
+  if (json.length > 7900) { showMsg("Your answers are too long. Please make them shorter."); return; }
+  const btn = $("#btn"); btn.disabled = true; btn.textContent = "Sending…";
+  const rid = form.onePerPhone ? "ph_" + phoneKey : [...crypto.getRandomValues(new Uint8Array(10))].map(b => b.toString(16).padStart(2, "0")).join("");
+  try {
+    await Promise.race([
+      db.collection("forms").doc(id).collection("responses").doc(rid).set({ answersJson: json, phoneKey, submittedAt: firebase.firestore.FieldValue.serverTimestamp(), source: "web-form" }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000))
+    ]);
+    $("#f").classList.add("hide"); state("✅ Received. Thank you."); window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (err) {
+    btn.disabled = false; btn.textContent = "Send";
+    console.error(err);
+    if (err && err.code === "permission-denied") showMsg(form.onePerPhone ? "This form could not be accepted. If you have already sent it, you do not need to send it again. (Code: " + err.code + ")" : "This form is closed or could not be sent. (Code: " + err.code + ")");
+    else showMsg("Could not send. Check your internet and tap Send again. Your answers are still here.");
+  }
+});
+load();
+</script>
+</body>
+</html>

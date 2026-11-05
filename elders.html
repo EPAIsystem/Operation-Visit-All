@@ -478,7 +478,7 @@ form.addEventListener("submit", async ev => {
   }catch(err){
     btn.disabled = false; btn.textContent = "Submit form";
     if(err && err.code === "permission-denied"){
-      showMsg("A form with this phone number has already been sent. Thank you, you do not need to send it again. If something must be corrected, please tell your District Pastor.");
+      console.error(err); showMsg("This form could not be accepted. If you have already sent it, thank you, you do not need to send it again. If you have not, please tell the person who sent you this link. (Code: " + err.code + ")");
       return;
     }
     showMsg("The form could not be sent. Check your internet connection and tap Submit again. Your answers are still here, and you can also print this form.");
