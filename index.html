@@ -474,10 +474,28 @@ body {
       <div class="field">
         <label>Registering As</label>
         <select id="r-role-req">
-          <option value="team_member">Visitation Team Member</option>
-          <option value="team_leader">Team Leader</option>
+        <optgroup label="Mission Office">
+          <option value="mission_admin">Mission Admin (President)</option>
+          <option value="exec_secretary">Executive Secretary</option>
+          <option value="system_engineer">System Engineer</option>
+        </optgroup>
+        <optgroup label="District">
           <option value="district_pastor">District Pastor</option>
-        </select>
+          <option value="assoc_district_pastor">Assoc. District Pastor</option>
+          <option value="district_elder">District Elder</option>
+          <option value="assoc_district_elder">Assoc. District Elder</option>
+        </optgroup>
+        <optgroup label="Church">
+          <option value="church_elder">Church Elder</option>
+          <option value="elder">Elder</option>
+          <option value="church_leader">Church Leader</option>
+          <option value="action_unit_leader">Action Unit Leader</option>
+          <option value="small_group_leader">Small Group Leader</option>
+          <option value="visitation_team_leader">Visitation Team Leader</option>
+          <option value="team_leader">Team Leader</option>
+          <option value="team_member" selected>Visitation Team Member</option>
+        </optgroup>
+      </select>
       </div>
       <div class="form-row">
         <div class="field">
@@ -613,10 +631,27 @@ body {
     <div class="field">
       <label>Assign Role</label>
       <select id="mod-a-role">
-        <option value="team_member">Team Member</option>
-        <option value="team_leader">Team Leader</option>
-        <option value="district_pastor">District Pastor</option>
-        <option value="mission_admin">Mission Admin</option>
+        <optgroup label="Mission Office">
+          <option value="mission_admin">Mission Admin (President)</option>
+          <option value="exec_secretary">Executive Secretary</option>
+          <option value="system_engineer">System Engineer</option>
+        </optgroup>
+        <optgroup label="District">
+          <option value="district_pastor">District Pastor</option>
+          <option value="assoc_district_pastor">Assoc. District Pastor</option>
+          <option value="district_elder">District Elder</option>
+          <option value="assoc_district_elder">Assoc. District Elder</option>
+        </optgroup>
+        <optgroup label="Church">
+          <option value="church_elder">Church Elder</option>
+          <option value="elder">Elder</option>
+          <option value="church_leader">Church Leader</option>
+          <option value="action_unit_leader">Action Unit Leader</option>
+          <option value="small_group_leader">Small Group Leader</option>
+          <option value="visitation_team_leader">Visitation Team Leader</option>
+          <option value="team_leader">Team Leader</option>
+          <option value="team_member" selected>Visitation Team Member</option>
+        </optgroup>
       </select>
     </div>
     <div class="field">
@@ -701,7 +736,7 @@ const ROLE_LABELS = {
   team_member: 'Team Member',
 };
 
-const dName = id => DISTRICTS.find(d => d.id === id)?.name || id || '—';
+const dName = id => id === 'mission' ? 'Mission Office' : DISTRICTS.find(d => d.id === id)?.name || id || '—';
 const rName = r  => ROLE_LABELS[r] || r || '—';
 
 // ── POPULATE SELECTS ───────────────────────────────────────
@@ -715,7 +750,9 @@ function fillDistrictSelect(id) {
   });
 }
 fillDistrictSelect('r-district');
+(function(){ var o=document.createElement('option'); o.value='mission'; o.textContent='Mission Office (all districts)'; document.getElementById('r-district').appendChild(o); })();
 fillDistrictSelect('mod-a-dist');
+(function(){ var o=document.createElement('option'); o.value='mission'; o.textContent='Mission Office (all districts)'; document.getElementById('mod-a-dist').appendChild(o); })();
 
 // ── SCREEN MANAGER ─────────────────────────────────────────
 const SCREENS = ['auth','pending','rejected','dashboard','admin'];
