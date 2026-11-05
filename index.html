@@ -22,10 +22,10 @@
 <style>
 /* ── TOKENS ───────────────────────────────────────────── */
 :root {
-  --teal:       #0A7B6E;
-  --teal-dk:    #065548;
-  --teal-md:    #1A9B8A;
-  --teal-lt:    #E6F4F2;
+  --teal:       #0E5A87;
+  --teal-dk:    #08304D;
+  --teal-md:    #2379A8;
+  --teal-lt:    #E5F0F7;
   --gold:       #C9972A;
   --red:        #C0392B;
   --red-lt:     #FDECEA;
@@ -33,12 +33,12 @@
   --amber-txt:  #856404;
   --green-lt:   #D1F2E8;
   --green-txt:  #0D6B4E;
-  --text:       #132420;
-  --muted:      #527470;
-  --border:     #C4DBD8;
-  --bg:         #F2FAF8;
+  --text:       #0F2230;
+  --muted:      #4F6B7C;
+  --border:     #C5D8E4;
+  --bg:         #F2F7FA;
   --card:       #FFFFFF;
-  --shadow:     0 2px 12px rgba(10,123,110,0.10);
+  --shadow:     0 2px 12px rgba(14,90,135,0.10);
   --radius:     10px;
   --radius-lg:  16px;
   --font:       'Plus Jakarta Sans', -apple-system, sans-serif;
@@ -134,7 +134,7 @@ body {
 .field select:focus,
 .field textarea:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(10,123,110,.10);
+  box-shadow: 0 0 0 3px rgba(14,90,135,.10);
 }
 .field select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23527470' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -249,6 +249,34 @@ body {
   text-align: left; line-height: 1.6;
 }
 
+
+/* ── OPERATION VISIT ALL ──────────────────────────────── */
+#screen-ova { background: var(--bg); }
+.ova-body { padding: 16px; overflow-y: auto; flex: 1; }
+.ova-body .vt { font-size: 22px; margin: 6px 0 10px; color: var(--teal-dk); }
+.ova-body a.big-btn { text-decoration: none; }
+.ova-body .in { width: 100%; min-height: 52px; padding: 12px 14px; margin: 4px 0 10px; font-size: 17px; font-family: var(--font);
+  border: 2px solid var(--border); border-radius: 12px; background: #fff; color: var(--text); }
+.ova-body textarea.in { min-height: 90px; }
+.ova-body .lb { display: block; font-size: 15px; font-weight: 700; margin-top: 8px; color: var(--teal-dk); }
+.ova-body .row { display: block; width: 100%; text-align: left; background: #fff; border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 12px 14px; margin-top: 8px; font-size: 17px; cursor: pointer; color: var(--text); font-family: var(--font); }
+.ova-body .row small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+.kv { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--bg); font-size: 15px; }
+.kv:last-child { border-bottom: 0; } .kv span { color: var(--muted); } .kv b { text-align: right; }
+.st { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+.st-gray { background: #E8EEF2; color: #4F6B7C; } .st-amber { background: var(--amber); color: var(--amber-txt); }
+.st-blue { background: #DCEBF7; color: #0E5A87; } .st-green { background: var(--green-lt); color: var(--green-txt); }
+.st-red { background: var(--red-lt); color: var(--red); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.chip { padding: 9px 14px; border-radius: 22px; border: 2px solid var(--border); background: #fff; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; font-family: var(--font); }
+.chip.on { background: var(--teal); border-color: var(--teal); color: #fff; }
+.chip.chk input { display: none; } .chip.chk:has(input:checked) { background: var(--teal); border-color: var(--teal); color: #fff; }
+.ov-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ov-grid .el-stat { text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; }
+.ov-t { width: 100%; border-collapse: collapse; font-size: 15px; } .ov-t th { text-align: right; color: var(--muted); font-size: 12px; }
+.ov-t td { padding: 6px 0; border-bottom: 1px solid var(--bg); text-align: right; } .ov-t td:first-child, .ov-t th:first-child { text-align: left; }
+
 /* ── DASHBOARD SCREEN ─────────────────────────────────── */
 #screen-dashboard { background: var(--bg); }
 .bar {
@@ -274,7 +302,7 @@ body {
 }
 .tag {
   display: inline-flex; align-items: center; gap: 6px;
-  background: var(--teal-lt); border: 1px solid rgba(10,123,110,.18);
+  background: var(--teal-lt); border: 1px solid rgba(14,90,135,.18);
   border-radius: 20px; padding: 6px 14px;
   font-size: 13px; font-weight: 600; color: var(--teal);
 }
@@ -592,8 +620,16 @@ body {
         <span class="tag">📍 <span id="d-dist">—</span></span>
       </div>
     </div>
-    <p style="text-align:center;font-size:12px;color:var(--muted);">Visitation features will appear here as they are activated by the Mission.</p>
+    <button class="tile" id="btn-open-ova"><span class="ic">🚶</span><span>Operation Visit All<small>Visit reports, members, teams</small></span></button>
   </div>
+</div>
+
+<div id="screen-ova" class="screen hidden">
+  <div class="bar">
+    <div><h2>🚶 Operation Visit All</h2><p>Evangelism · Volta Ghana Mission</p></div>
+    <button class="btn-ghost" id="ova-back">←</button>
+  </div>
+  <div class="ova-body" id="ova-body"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════════
@@ -798,7 +834,8 @@ fillDistrictSelect('mod-a-dist');
 (function(){ var o=document.createElement('option'); o.value='mission'; o.textContent='Mission Office (all districts)'; document.getElementById('mod-a-dist').appendChild(o); })();
 
 // ── SCREEN MANAGER ─────────────────────────────────────────
-const SCREENS = ['auth','pending','rejected','dashboard','admin'];
+const SCREENS = ['auth','pending','rejected','dashboard','admin','ova'];
+let _dashData = null;
 function show(id) {
   SCREENS.forEach(s =>
     document.getElementById('screen-' + s).classList.add('hidden')
@@ -953,6 +990,7 @@ document.getElementById('btn-resend').addEventListener('click', async () => {
   catch (e) { msg.textContent = 'Please wait a minute and try again.'; }
 });
 document.getElementById('btn-so-rejected').addEventListener('click', signOut);
+document.getElementById('btn-open-ova').addEventListener('click', () => openOva(_dashData, 'dashboard'));
 document.getElementById('btn-so-dash')    .addEventListener('click', signOut);
 document.getElementById('btn-so-admin')   .addEventListener('click', signOut);
 
@@ -1126,6 +1164,7 @@ function renderRejected(data) {
 // DASHBOARD SCREEN
 // ══════════════════════════════════════════════════════════
 function renderDashboard(data) {
+  _dashData = data;
   document.getElementById('d-greet').textContent =
     'Welcome, ' + (data.displayName?.split(' ')[0] || 'Member') + '!';
   document.getElementById('d-role').textContent = rName(data.role);
@@ -1229,6 +1268,65 @@ function buildPendingList(users) {
 }
 
 // ── All users tab ──────────────────────────────────────────
+// ── Invited people (the old app's users) ───────────────────
+const CHURCH_ROLES = ['church_elder','elder','church_leader','action_unit_leader','small_group_leader','visitation_team_leader','team_leader','team_member'];
+
+function inviteBox() {
+  const box = document.createElement('div');
+  if (!['mission_admin','system_engineer','district_pastor','assoc_district_pastor'].includes(_adminData?.role)) return box;
+  const isPastorOnly = !MISSION_ROLES.includes(_adminData?.role);
+  const roles = isPastorOnly ? CHURCH_ROLES : Object.keys(ROLE_LABELS);
+  box.innerHTML = `<button class="big-btn fill" id="inv-open">➕ Invite someone</button>
+    <form id="f-invite" class="hidden dept-card" style="margin-top:10px">
+      <p class="dept-note">They sign up with this email and get this role at once.</p>
+      <input class="in" name="name" placeholder="Full name" required minlength="2" style="width:100%;min-height:52px;padding:12px;margin:4px 0 8px;font-size:17px;border:2px solid var(--border);border-radius:12px">
+      <input class="in" name="email" type="email" placeholder="Email" required style="width:100%;min-height:52px;padding:12px;margin:4px 0 8px;font-size:17px;border:2px solid var(--border);border-radius:12px">
+      <select name="role" style="width:100%;min-height:52px;padding:12px;margin:4px 0 8px;font-size:17px;border:2px solid var(--border);border-radius:12px">${roles.map(r => `<option value="${r}">${esc(rName(r))}</option>`).join('')}</select>
+      ${isPastorOnly ? '' : `<select name="districtId" style="width:100%;min-height:52px;padding:12px;margin:4px 0 8px;font-size:17px;border:2px solid var(--border);border-radius:12px"><option value="mission">Mission Office</option>${DISTRICTS.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select>`}
+      <button class="big-btn fill" type="submit">Save invite</button>
+    </form>`;
+  box.querySelector('#inv-open').addEventListener('click', () => box.querySelector('#f-invite').classList.toggle('hidden'));
+  box.querySelector('#f-invite').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const f = ev.target, el = f.elements, email = el.email.value.trim().toLowerCase();
+    try {
+      await db.collection('invites').doc(email).set({
+        name: el.name.value.trim(), email, role: el.role.value,
+        districtId: isPastorOnly ? _adminData.districtId : (el.districtId.value || null),
+        extraRoles: [], churchId: null, createdAt: new Date().toISOString(), invitedBy: _adminData.uid
+      });
+      toast('Invite saved ✓', 'ok'); loadAllUsers();
+    } catch (e) { toast('Could not save. Check the role and district.', 'err'); }
+  });
+  return box;
+}
+
+async function listInvites(list, signed) {
+  try {
+    let q = db.collection('invites');
+    if (!MISSION_ROLES.includes(_adminData?.role)) q = q.where('districtId', '==', _adminData.districtId);
+    const snap = await q.get();
+    const inv = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    const head = document.createElement('div');
+    head.className = 'dept-h';
+    head.textContent = '📨 Invited from the old app (' + inv.length + ')';
+    list.appendChild(head);
+    if (!inv.length) { list.insertAdjacentHTML('beforeend', '<p class="dept-note">No invites.</p>'); return; }
+    inv.forEach(v => {
+      const done = signed.has(String(v.email || v.id).toLowerCase());
+      const c = document.createElement('div');
+      c.className = 'u-card';
+      c.innerHTML = `<div class="u-card-top"><div><div class="u-name">${esc(v.name || '—')}</div><div class="u-email">${esc(v.email || v.id)}</div></div>
+        <span class="badge ${done ? 'badge-approved' : 'badge-pending'}">${done ? '✓ Signed in' : '⏳ Not yet'}</span></div>
+        <div class="u-meta"><div class="u-meta-item"><span class="u-meta-lbl">Role</span><span class="u-meta-val">${esc(rName(v.role))}</span></div>
+        <div class="u-meta-item"><span class="u-meta-lbl">District</span><span class="u-meta-val">${esc(dName(v.districtId))}</span></div></div>`;
+      list.appendChild(c);
+    });
+  } catch (e) {
+    list.insertAdjacentHTML('beforeend', `<p class="dept-note">Could not load invites: ${esc(e.message)}</p>`);
+  }
+}
+
 async function loadAllUsers() {
   const list = document.getElementById('all-list');
   list.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)">Loading…</div>';
@@ -1244,10 +1342,8 @@ async function loadAllUsers() {
     const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 
     list.innerHTML = '';
-    if (users.length === 0) {
-      list.innerHTML = `<div class="empty"><div class="e-icon">👥</div><h3>No users yet</h3><p>No registrations have been submitted.</p></div>`;
-      return;
-    }
+    list.appendChild(inviteBox());
+    const signed = new Set(users.map(u => String(u.email || '').toLowerCase()));
 
     users.forEach(u => {
       const sc  = { approved:'badge-approved', pending:'badge-pending', rejected:'badge-rejected' }[u.status] || 'badge-pending';
@@ -1285,6 +1381,7 @@ async function loadAllUsers() {
       }
       list.appendChild(card);
     });
+    await listInvites(list, signed);
   } catch (e) {
     list.innerHTML = `<div class="empty"><div class="e-icon">⚠️</div><h3>Could not load users</h3><p>${esc(e.message)}</p></div>`;
   }
@@ -1449,7 +1546,7 @@ document.getElementById('dept-list').addEventListener('click', async ev => {
   const act = ev.target.closest('[data-act]');
   if (act) {
     const a = _acts.find(x => x.id === act.dataset.act);
-    if (a && a.key === 'visit_all') toast('Members and visit reports open here next. Your data is safe.', 'ok');
+    if (a && a.key === 'visit_all') openOva(_adminData, 'admin');
     return;
   }
   const addAct = ev.target.closest('[data-addact]');
@@ -1838,6 +1935,415 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
     btn.disabled = false; btn.textContent = '✗ Reject';
   }
 });
+// ══════════════════════════════════════════════════════════
+// OPERATION VISIT ALL  (an activity of the Evangelism department)
+// Members · Visit Reports (elder → pastor → mission) · Teams · Announcements
+// ══════════════════════════════════════════════════════════
+(function () {
+  const $ = id => document.getElementById(id);
+  const TS = () => firebase.firestore.FieldValue.serverTimestamp();
+  const iso = () => new Date().toISOString();
+
+  const CONDITIONS = ['Faith Strong', 'Sick / Infirm', 'Financial Hardship', 'Conflict in Home', 'Backslider',
+    'Discouraged', 'New Convert', 'Recently Relocated', 'Youth at Risk', 'Missing / Absent'];
+  const STATUS = {
+    draft: ['Draft', 'st-gray'], submitted: ['Waiting for Elder', 'st-amber'], elder_ok: ['Waiting for Pastor', 'st-amber'],
+    pastor_ok: ['Waiting for Mission', 'st-blue'], completed: ['Completed ✓', 'st-green'], returned: ['Sent back', 'st-red'],
+  };
+  const ELDER_TIER = ['church_elder', 'elder', 'district_elder', 'assoc_district_elder'];
+  const PASTORS = ['district_pastor', 'assoc_district_pastor'];
+
+  let me = null, back = 'dashboard', view = 'home', arg = null;
+  let S = { members: [], reports: [], teams: [], anns: [], churches: [], leaders: {} };
+  let subs = [], filters = { q: '', dist: '', status: 'all', shown: 60 };
+
+  const isMissionRole = () => me && MISSION_ROLES.includes(me.role) && !(me.role === 'system_engineer' && me.restricted);
+  const isPastorRole = () => me && PASTORS.includes(me.role);
+  const isElderRole = () => me && ELDER_TIER.includes(me.role);
+  const seesAll = () => isMissionRole();
+  const myDist = () => (me && me.districtId && me.districtId !== 'mission') ? me.districtId : null;
+  const churchName = id => (S.churches.find(c => c.id === id) || {}).name || '';
+  const e = esc;
+
+  // ── enter / leave ────────────────────────────────────────
+  window.openOva = function (user, from) {
+    me = user; back = from || 'dashboard'; view = 'home'; arg = null;
+    filters = { q: '', dist: '', status: 'all', shown: 60 };
+    start(); show('ova'); render();
+  };
+  function leave() { stop(); show(back); }
+  function stop() { subs.forEach(f => { try { f(); } catch (_) {} }); subs = []; }
+
+  function listen(col, key, q, map) {
+    const un = (q || db.collection(col)).onSnapshot(snap => {
+      S[key] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (map) map();
+      render();
+    }, err => { console.warn(col, err.code); S[key] = []; render(); });
+    subs.push(un);
+  }
+
+  function start() {
+    stop();
+    const d = myDist();
+    const scoped = c => (seesAll() || !d) ? db.collection(c) : db.collection(c).where('districtId', '==', d);
+    listen('churches', 'churches');
+    listen('members', 'members', scoped('members'));
+    listen('teams', 'teams', scoped('teams'));
+    listen('announcements', 'anns');
+    // reports: church-level people only see their own
+    let rq;
+    if (seesAll()) rq = db.collection('reports');
+    else if ((isPastorRole() || isElderRole()) && d) rq = db.collection('reports').where('districtId', '==', d);
+    else rq = db.collection('reports').where('submittedBy', '==', me.uid);
+    listen('reports', 'reports', rq);
+    // names of old leaders (from the invites that came from the old app)
+    if (isMissionRole() || isPastorRole()) {
+      let iq = db.collection('invites');
+      if (!isMissionRole() && d) iq = iq.where('districtId', '==', d);
+      iq.get().then(s => { S.leaders = {}; s.docs.forEach(x => { const v = x.data(); if (v.legacyId) S.leaders[v.legacyId] = v.name; }); render(); }).catch(() => {});
+    }
+  }
+
+  // ── helpers ──────────────────────────────────────────────
+  const fdate = v => { try { const t = v && v.toDate ? v.toDate() : new Date(v); return isNaN(t) ? '' : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (_) { return ''; } };
+  const badge = s => { const x = STATUS[s] || [s || '—', 'st-gray']; return `<span class="st ${x[1]}">${e(x[0])}</span>`; };
+  const tile = (go, ic, t, sub) => `<button class="tile" data-go="${go}"><span class="ic">${ic}</span><span>${t}<small>${sub || ''}</small></span></button>`;
+  const backBtn = (to, label) => `<button class="back-btn" data-go="${to}">← ${label || 'Back'}</button>`;
+  const empty = (ic, t) => `<div class="empty"><div class="e-icon">${ic}</div><h3>${t}</h3></div>`;
+  const options = (list, sel, ph) => (ph ? `<option value="">${ph}</option>` : '') + list.map(o => { const v = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o; return `<option value="${e(v)}"${v === sel ? ' selected' : ''}>${e(l)}</option>`; }).join('');
+  const myChurches = distId => S.churches.filter(c => !distId || c.districtId === distId).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const districtOpts = sel => options(DISTRICTS.map(x => [x.id, x.name]), sel, 'Choose district');
+
+  function waitingForMe(r) {
+    if (isMissionRole()) return r.status === 'pastor_ok';
+    if (isPastorRole()) return (r.status === 'elder_ok' || r.status === 'submitted') && r.districtId === myDist();
+    if (isElderRole()) return r.status === 'submitted' && r.districtId === myDist();
+    return false;
+  }
+
+  // ── render ───────────────────────────────────────────────
+  function render() {
+    if (!me || $('screen-ova').classList.contains('hidden')) return;
+    const body = $('ova-body');
+    const fn = { home, overview, members, member, newmember, reports, report, newreport, teams, newteam, anns, newann }[view] || home;
+    body.innerHTML = fn();
+  }
+
+  function home() {
+    const wait = S.reports.filter(waitingForMe).length;
+    return `<button class="big-btn fill" data-go="newreport">➕ New visit report</button>
+      ${tile('reports', '📝', 'Visit Reports', wait ? `${wait} waiting for you` : `${S.reports.length} reports`)}
+      ${tile('members', '👥', 'Members', `${S.members.length} people`)}
+      ${tile('teams', '🧑‍🤝‍🧑', 'Visitation Teams', `${S.teams.length} teams`)}
+      ${tile('anns', '📢', 'Announcements', `${S.anns.length} messages`)}
+      ${tile('overview', '📊', 'Overview', 'Numbers at a glance')}`;
+  }
+
+  // ── overview ─────────────────────────────────────────────
+  function overview() {
+    const R = S.reports, by = s => R.filter(r => r.status === s).length;
+    let rows = '';
+    if (seesAll()) {
+      const m = {};
+      DISTRICTS.forEach(d => m[d.id] = { n: d.name, mem: 0, rep: 0, done: 0 });
+      S.members.forEach(x => { if (m[x.districtId]) m[x.districtId].mem++; });
+      R.forEach(x => { if (m[x.districtId]) { m[x.districtId].rep++; if (x.status === 'completed') m[x.districtId].done++; } });
+      rows = `<div class="dept-h">By district</div><div class="dept-card"><table class="ov-t"><tr><th></th><th>People</th><th>Visits</th><th>Done</th></tr>` +
+        Object.values(m).filter(x => x.mem || x.rep).sort((a, b) => b.rep - a.rep).map(x => `<tr><td>${e(x.n.replace(' District', ''))}</td><td>${x.mem}</td><td>${x.rep}</td><td>${x.done}</td></tr>`).join('') + '</table></div>';
+    }
+    const st = (n, l) => `<div class="el-stat"><b>${n}</b>${l}</div>`;
+    return `${backBtn('home', 'Operation Visit All')}<h3 class="vt">📊 Overview</h3>
+      <div class="ov-grid">${st(S.members.length, 'People')}${st(R.length, 'Visits')}${st(by('completed'), 'Completed')}
+      ${st(by('submitted') + by('elder_ok') + by('pastor_ok'), 'Waiting')}${st(S.teams.length, 'Teams')}${st(R.filter(r => r.followUp).length, 'Need follow-up')}</div>${rows}`;
+  }
+
+  // ── members ──────────────────────────────────────────────
+  function members() {
+    const q = filters.q.toLowerCase();
+    let L = S.members.filter(m => (!filters.dist || m.districtId === filters.dist) &&
+      (!q || (m.name || '').toLowerCase().includes(q) || (m.contact || '').includes(q)));
+    L.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    const total = L.length; L = L.slice(0, filters.shown);
+    return `${backBtn('home', 'Operation Visit All')}<h3 class="vt">👥 Members</h3>
+      <input class="in" id="f-q" placeholder="🔍 Search name or phone" value="${e(filters.q)}">
+      ${seesAll() ? `<select class="in" id="f-dist">${districtOpts(filters.dist).replace('Choose district', 'All districts')}</select>` : ''}
+      <button class="big-btn" data-go="newmember">➕ Add a person</button>
+      <p class="dept-note" style="margin-top:12px">${total} people</p>
+      ${L.map(m => `<button class="row" data-member="${e(m.id)}"><b>${e(m.name || '—')}</b><small>${e(churchName(m.churchId))}${m.contact ? ' · ' + e(m.contact) : ''}</small></button>`).join('') || empty('👥', 'No one found')}
+      ${total > L.length ? `<button class="big-btn" data-more="1">Show more</button>` : ''}`;
+  }
+
+  function member() {
+    const m = S.members.find(x => x.id === arg);
+    if (!m) return backBtn('members', 'Members') + empty('❓', 'Not found');
+    const tel = String(m.contact || '').replace(/[^\d+]/g, '');
+    const wa = tel.replace(/^0/, '233').replace(/^\+/, '');
+    const visits = S.reports.filter(r => r.memberId === m.id).length;
+    const canEdit = isMissionRole() || isPastorRole();
+    return `${backBtn('members', 'Members')}<h3 class="vt">${e(m.name)}</h3>
+      <div class="dept-card">
+        <div class="kv"><span>Church</span><b>${e(churchName(m.churchId) || '—')}</b></div>
+        <div class="kv"><span>District</span><b>${e(dName(m.districtId))}</b></div>
+        <div class="kv"><span>Phone</span><b>${e(m.contact || '—')}</b></div>
+        <div class="kv"><span>Gender</span><b>${e(m.gender || '—')}</b></div>
+        <div class="kv"><span>Baptized</span><b>${m.baptized ? 'Yes' : 'No'}</b></div>
+        <div class="kv"><span>Address</span><b>${e(m.address || '—')}</b></div>
+        <div class="kv"><span>Visits</span><b>${visits}</b></div>
+      </div>
+      ${tel ? `<a class="big-btn" href="tel:${e(tel)}">📞 Call</a><a class="big-btn" href="https://wa.me/${e(wa)}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
+      <button class="big-btn fill" data-newvisit="${e(m.id)}">📝 Visit this person</button>
+      ${canEdit ? `<button class="big-btn" data-delmember="${e(m.id)}" style="color:#C0392B;border-color:#C0392B">🗑 Remove</button>` : ''}`;
+  }
+
+  function newmember() {
+    const d = myDist();
+    return `${backBtn('members', 'Members')}<h3 class="vt">➕ Add a person</h3>
+      <form id="f-member">
+        ${d ? '' : `<label class="lb">District</label><select class="in" name="districtId" required>${districtOpts('')}</select>`}
+        <label class="lb">Name</label><input class="in" name="name" required minlength="2" maxlength="100" autocomplete="off">
+        <label class="lb">Phone</label><input class="in" name="contact" type="tel" maxlength="20">
+        <label class="lb">Church</label><select class="in" name="churchId" required>${options(myChurches(d).map(c => [c.id, c.name]), '', 'Choose church')}</select>
+        <label class="lb">Gender</label><select class="in" name="gender">${options(['Female', 'Male'], '', 'Choose')}</select>
+        <label class="lb">Baptized?</label><select class="in" name="baptized">${options([['yes', 'Yes'], ['no', 'No']], 'yes')}</select>
+        <label class="lb">Address (optional)</label><input class="in" name="address" maxlength="150">
+        <button class="big-btn fill" type="submit">Save</button>
+      </form>`;
+  }
+
+  // ── reports ──────────────────────────────────────────────
+  function reports() {
+    const chips = [['all', 'All'], ['mine', 'Waiting for me'], ['draft', 'Drafts'], ['submitted', 'Elder'], ['elder_ok', 'Pastor'], ['pastor_ok', 'Mission'], ['completed', 'Done'], ['returned', 'Sent back']];
+    let L = S.reports.filter(r => filters.status === 'all' ? true : filters.status === 'mine' ? waitingForMe(r) : r.status === filters.status);
+    L.sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || '')));
+    const total = L.length; L = L.slice(0, filters.shown);
+    return `${backBtn('home', 'Operation Visit All')}<h3 class="vt">📝 Visit Reports</h3>
+      <button class="big-btn fill" data-go="newreport">➕ New visit report</button>
+      <div class="chips">${chips.map(c => `<button class="chip${filters.status === c[0] ? ' on' : ''}" data-status="${c[0]}">${c[1]}</button>`).join('')}</div>
+      <p class="dept-note">${total} reports</p>
+      ${L.map(r => `<button class="row" data-report="${e(r.id)}"><b>${e(r.memberName || '—')}</b><small>${e(churchName(r.churchId))} · ${e(fdate(r.submittedAt))}</small>${badge(r.status)}</button>`).join('') || empty('📝', 'No reports here')}
+      ${total > L.length ? `<button class="big-btn" data-more="1">Show more</button>` : ''}`;
+  }
+
+  function report() {
+    const r = S.reports.find(x => x.id === arg);
+    if (!r) return backBtn('reports', 'Reports') + empty('❓', 'Not found');
+    const yn = v => v ? 'Yes' : 'No';
+    const who = (n, id) => n || S.leaders[id] || '';
+    const chain = [
+      ['Written by', who(r.submitterName, r.submittedBy), r.submittedAt],
+      ['Elder approved', who(r.elderName, r.elderBy), r.elderAt],
+      ['Pastor approved', who(r.pastorName, r.pastorBy), r.pastorAt],
+      ['Mission approved', who(r.missName, r.missBy), r.missAt],
+    ].filter(x => x[2] || x[1]);
+    const mine = r.submittedBy === me.uid && (r.status === 'draft' || r.status === 'returned');
+    let act = '';
+    if (mine) act += `<button class="big-btn fill" data-send="${e(r.id)}">📤 Send for approval</button><button class="big-btn" data-edit="${e(r.id)}">✏️ Change it</button>`;
+    if (waitingForMe(r)) act += `<button class="big-btn fill" data-approve="${e(r.id)}">✅ Approve</button><button class="big-btn" data-return="${e(r.id)}" style="color:#C0392B;border-color:#C0392B">↩ Send back</button>`;
+    return `${backBtn('reports', 'Reports')}<h3 class="vt">${e(r.memberName || '—')}</h3>${badge(r.status)}
+      ${r.status === 'returned' && r.returnNote ? `<div class="dept-card" style="border-color:#C0392B"><b>Sent back:</b> ${e(r.returnNote)}</div>` : ''}
+      <div class="dept-card">
+        <div class="kv"><span>Church</span><b>${e(churchName(r.churchId) || '—')}</b></div>
+        <div class="kv"><span>District</span><b>${e(dName(r.districtId))}</b></div>
+        <div class="kv"><span>Phone</span><b>${e(r.contact || '—')}</b></div>
+        <div class="kv"><span>Condition</span><b>${e((r.conditions || []).join(', ') || '—')}</b></div>
+        <div class="kv"><span>Spiritual</span><b>${e(r.nSpiritual || '—')}</b></div>
+        <div class="kv"><span>Physical</span><b>${e(r.nPhysical || '—')}</b></div>
+        <div class="kv"><span>Emotional</span><b>${e(r.nEmotional || '—')}</b></div>
+        <div class="kv"><span>Financial</span><b>${e(r.nFinancial || '—')}</b></div>
+        <div class="kv"><span>Bible text</span><b>${e(r.bibleText || '—')}</b></div>
+        <div class="kv"><span>Prayer offered</span><b>${yn(r.prayerOffered)}</b></div>
+        <div class="kv"><span>Invited to church</span><b>${yn(r.invitationGiven)}</b></div>
+        <div class="kv"><span>Follow-up needed</span><b>${yn(r.followUp)}${r.followUpNote ? ' · ' + e(r.followUpNote) : ''}</b></div>
+        ${r.response ? `<div class="kv"><span>Response</span><b>${e(r.response)}</b></div>` : ''}
+        ${r.notes ? `<div class="kv"><span>Notes</span><b>${e(r.notes)}</b></div>` : ''}
+      </div>
+      ${chain.length ? `<div class="dept-card"><b>Approval trail</b>${chain.map(c => `<div class="kv"><span>${c[0]}</span><b>${e(c[1] || '—')}<br><small>${e(fdate(c[2]))}</small></b></div>`).join('')}</div>` : ''}
+      ${act}`;
+  }
+
+  function newreport() {
+    const r = arg && typeof arg === 'object' ? arg : (arg ? S.reports.find(x => x.id === arg) : null);
+    const pre = (typeof arg === 'string' && S.members.find(m => m.id === arg)) || null;
+    const v = r || {};
+    const memName = r ? r.memberName : (pre ? pre.name : '');
+    const d = myDist();
+    const pick = k => (r && r[k]) || '';
+    return `${backBtn('reports', 'Cancel')}<h3 class="vt">${r && r.id ? '✏️ Change report' : '📝 New visit report'}</h3>
+      <form id="f-report">
+        ${d ? '' : `<label class="lb">District</label><select class="in" name="districtId" required>${districtOpts(pick('districtId'))}</select>`}
+        <label class="lb">Who did you visit?</label>
+        <input class="in" name="memberName" list="memlist" required value="${e(memName)}" placeholder="Start typing the name" autocomplete="off">
+        <datalist id="memlist">${S.members.slice(0, 400).map(m => `<option value="${e(m.name)}">`).join('')}</datalist>
+        <label class="lb">Phone</label><input class="in" name="contact" type="tel" value="${e(v.contact || (pre && pre.contact) || '')}">
+        <label class="lb">Church</label><select class="in" name="churchId">${options(myChurches(d).map(c => [c.id, c.name]), v.churchId || (pre && pre.churchId) || '', 'Choose church')}</select>
+        <label class="lb">How is the person? (tap all that apply)</label>
+        <div class="chips">${CONDITIONS.map(c => `<label class="chip chk"><input type="checkbox" name="cond" value="${e(c)}"${(v.conditions || []).includes(c) ? ' checked' : ''}><span>${e(c)}</span></label>`).join('')}</div>
+        <label class="lb">Spiritual need</label><input class="in" name="nSpiritual" maxlength="200" value="${e(v.nSpiritual || '')}">
+        <label class="lb">Physical need</label><input class="in" name="nPhysical" maxlength="200" value="${e(v.nPhysical || '')}">
+        <label class="lb">Emotional need</label><input class="in" name="nEmotional" maxlength="200" value="${e(v.nEmotional || '')}">
+        <label class="lb">Financial need</label><input class="in" name="nFinancial" maxlength="200" value="${e(v.nFinancial || '')}">
+        <label class="lb">Bible text shared</label><input class="in" name="bibleText" maxlength="100" value="${e(v.bibleText || '')}" placeholder="e.g. John 3:16">
+        <label class="lb">Did you pray with the person?</label><select class="in" name="prayerOffered">${options([['yes', 'Yes'], ['no', 'No']], v.prayerOffered === false ? 'no' : 'yes')}</select>
+        <label class="lb">Invited to church?</label><select class="in" name="invitationGiven">${options([['yes', 'Yes'], ['no', 'No']], v.invitationGiven ? 'yes' : 'no')}</select>
+        <label class="lb">Needs another visit?</label><select class="in" name="followUp">${options([['yes', 'Yes'], ['no', 'No']], v.followUp ? 'yes' : 'no')}</select>
+        <label class="lb">What did the person say? (optional)</label><input class="in" name="response" maxlength="300" value="${e(v.response || '')}">
+        <label class="lb">Other notes (optional)</label><textarea class="in" name="notes" rows="3" maxlength="800">${e(v.notes || '')}</textarea>
+        <input type="hidden" name="rid" value="${e((r && r.id) || '')}">
+        <button class="big-btn fill" type="submit" data-how="submitted">📤 Send for approval</button>
+        <button class="big-btn" type="submit" data-how="draft">💾 Save and finish later</button>
+      </form>`;
+  }
+
+  // ── teams ────────────────────────────────────────────────
+  function teams() {
+    const canAdd = isMissionRole() || isPastorRole();
+    const L = S.teams.slice().sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    return `${backBtn('home', 'Operation Visit All')}<h3 class="vt">🧑‍🤝‍🧑 Visitation Teams</h3>
+      ${canAdd ? '<button class="big-btn" data-go="newteam">➕ Add a team</button>' : ''}
+      ${L.map(t => `<div class="dept-card"><h4>${e(t.name)}</h4>
+        <div class="kv"><span>Church</span><b>${e(churchName(t.churchId) || '—')}</b></div>
+        <div class="kv"><span>District</span><b>${e(dName(t.districtId))}</b></div>
+        <div class="kv"><span>Leader</span><b>${e(t.leaderName || S.leaders[t.leaderId] || '—')}</b></div>
+        ${canAdd ? `<button class="big-btn" data-delteam="${e(t.id)}" style="min-height:40px;font-size:14px;color:#C0392B;border-color:#C0392B">🗑 Remove</button>` : ''}</div>`).join('') || empty('🧑‍🤝‍🧑', 'No teams yet')}`;
+  }
+  function newteam() {
+    const d = myDist();
+    return `${backBtn('teams', 'Teams')}<h3 class="vt">➕ Add a team</h3>
+      <form id="f-team">
+        ${d ? '' : `<label class="lb">District</label><select class="in" name="districtId" required>${districtOpts('')}</select>`}
+        <label class="lb">Team name</label><input class="in" name="name" required minlength="2" maxlength="80">
+        <label class="lb">Church</label><select class="in" name="churchId" required>${options(myChurches(d).map(c => [c.id, c.name]), '', 'Choose church')}</select>
+        <label class="lb">Team leader's name</label><input class="in" name="leaderName" maxlength="80">
+        <button class="big-btn fill" type="submit">Save</button>
+      </form>`;
+  }
+
+  // ── announcements ────────────────────────────────────────
+  function anns() {
+    const canPost = isMissionRole() || isPastorRole();
+    const L = S.anns.slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return `${backBtn('home', 'Operation Visit All')}<h3 class="vt">📢 Announcements</h3>
+      ${canPost ? '<button class="big-btn" data-go="newann">➕ New announcement</button>' : ''}
+      ${L.map(a => `<div class="dept-card"><h4>${a.pinned ? '📌 ' : ''}${e(a.title || 'Announcement')}</h4>
+        <p style="white-space:pre-wrap;font-size:16px;line-height:1.5">${e(a.body || '')}</p>
+        <p class="dept-note" style="margin-top:8px">${e(a.authorName || '')} ${e(fdate(a.createdAt))}</p>
+        ${(isMissionRole() || a.authorUid === me.uid) ? `<button class="big-btn" data-delann="${e(a.id)}" style="min-height:40px;font-size:14px;color:#C0392B;border-color:#C0392B">🗑 Remove</button>` : ''}</div>`).join('') || empty('📢', 'No announcements')}`;
+  }
+  function newann() {
+    return `${backBtn('anns', 'Announcements')}<h3 class="vt">➕ New announcement</h3>
+      <form id="f-ann">
+        <label class="lb">Title</label><input class="in" name="title" required minlength="2" maxlength="100">
+        <label class="lb">Message</label><textarea class="in" name="body" rows="6" required maxlength="2000"></textarea>
+        <button class="big-btn fill" type="submit">Post</button>
+      </form>`;
+  }
+
+  // ── actions ──────────────────────────────────────────────
+  function go(v, a) { view = v; arg = a === undefined ? null : a; filters.shown = 60; render(); $('ova-body').scrollTop = 0; }
+  const yes = v => v === 'yes';
+
+  async function saveMember(f) {
+    const d = myDist() || f.elements.districtId.value;
+    const ch = S.churches.find(c => c.id === f.elements.churchId.value);
+    const data = {
+      name: f.elements.name.value.trim(), contact: f.elements.contact.value.trim(), churchId: f.elements.churchId.value,
+      districtId: (ch && ch.districtId) || d, gender: f.elements.gender.value, baptized: yes(f.elements.baptized.value),
+      address: f.elements.address.value.trim(), addedBy: me.uid, createdAt: iso()
+    };
+    await db.collection('members').add(data); toast('Saved ✓', 'ok'); go('members');
+  }
+
+  async function saveReport(f, how) {
+    const d = myDist() || (f.elements.districtId && f.elements.districtId.value);
+    const name = f.elements.memberName.value.trim();
+    const mem = S.members.find(m => (m.name || '').toLowerCase() === name.toLowerCase());
+    const churchId = f.elements.churchId.value || (mem && mem.churchId) || null;
+    const ch = S.churches.find(c => c.id === churchId);
+    const data = {
+      memberName: name, memberId: mem ? mem.id : null, contact: f.elements.contact.value.trim(), churchId,
+      districtId: (ch && ch.districtId) || (mem && mem.districtId) || d,
+      conditions: [...f.querySelectorAll('input[name=cond]:checked')].map(x => x.value),
+      nSpiritual: f.elements.nSpiritual.value.trim(), nPhysical: f.elements.nPhysical.value.trim(),
+      nEmotional: f.elements.nEmotional.value.trim(), nFinancial: f.elements.nFinancial.value.trim(),
+      bibleText: f.elements.bibleText.value.trim(), prayerOffered: yes(f.elements.prayerOffered.value),
+      invitationGiven: yes(f.elements.invitationGiven.value), followUp: yes(f.elements.followUp.value),
+      response: f.elements.response.value.trim(), notes: f.elements.notes.value.trim(),
+      campaignId: 'c-ova', status: how, submittedBy: me.uid, submitterName: me.displayName || '', submittedAt: iso(),
+    };
+    if (!data.districtId) { toast('Please choose the district.', 'err'); return; }
+    const rid = f.elements.rid.value;
+    if (rid) { delete data.submittedBy; delete data.submitterName; await db.collection('reports').doc(rid).update(Object.assign(data, { returnNote: '' })); }
+    else await db.collection('reports').add(data);
+    toast(how === 'draft' ? 'Saved ✓' : 'Sent ✓', 'ok'); go('reports');
+  }
+
+  async function advance(id, kind) {
+    const r = S.reports.find(x => x.id === id); if (!r) return;
+    let upd = {}, now = iso(), nm = me.displayName || '';
+    if (kind === 'approve') {
+      if (isMissionRole()) upd = { status: 'completed', missBy: me.uid, missAt: now, missName: nm };
+      else if (isPastorRole()) upd = { status: 'pastor_ok', pastorBy: me.uid, pastorAt: now, pastorName: nm };
+      else upd = { status: 'elder_ok', elderBy: me.uid, elderAt: now, elderName: nm };
+    } else {
+      const note = (window.prompt('Why are you sending it back? (short note)') || '').trim();
+      if (!note) return;
+      upd = { status: 'returned', returnNote: note.slice(0, 300) };
+    }
+    await db.collection('reports').doc(id).update(upd);
+    toast(kind === 'approve' ? 'Approved ✓' : 'Sent back', 'ok'); go('reports');
+  }
+
+  // ── events ───────────────────────────────────────────────
+  const body = () => $('ova-body');
+  document.addEventListener('DOMContentLoaded', wire);
+  if (document.readyState !== 'loading') wire();
+  let wired = false;
+  function wire() {
+    if (wired || !$('ova-body')) return; wired = true;
+    $('ova-back').addEventListener('click', () => { if (view === 'home') leave(); else go('home'); });
+    body().addEventListener('click', async ev => {
+      const t = ev.target.closest('button,a'); if (!t) return;
+      try {
+        if (t.dataset.go) return go(t.dataset.go);
+        if (t.dataset.member) return go('member', t.dataset.member);
+        if (t.dataset.report) return go('report', t.dataset.report);
+        if (t.dataset.newvisit) return go('newreport', t.dataset.newvisit);
+        if (t.dataset.edit) return go('newreport', t.dataset.edit);
+        if (t.dataset.status) { filters.status = t.dataset.status; filters.shown = 60; return render(); }
+        if (t.dataset.more) { filters.shown += 60; return render(); }
+        if (t.dataset.approve) return await advance(t.dataset.approve, 'approve');
+        if (t.dataset.return) return await advance(t.dataset.return, 'return');
+        if (t.dataset.send) { await db.collection('reports').doc(t.dataset.send).update({ status: 'submitted', returnNote: '' }); toast('Sent ✓', 'ok'); return go('reports'); }
+        if (t.dataset.delmember && window.confirm('Remove this person?')) { await db.collection('members').doc(t.dataset.delmember).delete(); toast('Removed', 'ok'); return go('members'); }
+        if (t.dataset.delteam && window.confirm('Remove this team?')) { await db.collection('teams').doc(t.dataset.delteam).delete(); toast('Removed', 'ok'); }
+        if (t.dataset.delann && window.confirm('Remove this announcement?')) { await db.collection('announcements').doc(t.dataset.delann).delete(); toast('Removed', 'ok'); }
+      } catch (err) { console.warn(err); toast('Could not do that. Please try again.', 'err'); }
+    });
+    body().addEventListener('input', ev => {
+      if (ev.target.id === 'f-q') { filters.q = ev.target.value; const p = ev.target.selectionStart; render(); const n = $('f-q'); if (n) { n.focus(); n.setSelectionRange(p, p); } }
+    });
+    body().addEventListener('change', ev => { if (ev.target.id === 'f-dist') { filters.dist = ev.target.value; render(); } });
+    body().addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const f = ev.target, btn = ev.submitter;
+      if (btn) btn.disabled = true;
+      try {
+        if (f.id === 'f-member') await saveMember(f);
+        else if (f.id === 'f-report') await saveReport(f, (btn && btn.dataset.how) || 'submitted');
+        else if (f.id === 'f-team') {
+          const ch = S.churches.find(c => c.id === f.elements.churchId.value);
+          await db.collection('teams').add({ name: f.elements.name.value.trim(), churchId: f.elements.churchId.value, districtId: (ch && ch.districtId) || myDist() || f.elements.districtId.value, leaderName: f.elements.leaderName.value.trim(), createdBy: me.uid, createdAt: iso() });
+          toast('Saved ✓', 'ok'); go('teams');
+        } else if (f.id === 'f-ann') {
+          await db.collection('announcements').add({ title: f.elements.title.value.trim(), body: f.elements.body.value.trim(), authorUid: me.uid, authorName: me.displayName || '', createdAt: iso(), pinned: false });
+          toast('Posted ✓', 'ok'); go('anns');
+        }
+      } catch (err) { console.warn(err); toast('Could not save. Check your connection and try again.', 'err'); if (btn) btn.disabled = false; }
+    });
+  }
+})();
+
 </script>
 </body>
 </html>
