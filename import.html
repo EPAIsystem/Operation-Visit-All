@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VGM Data Import</title>
+<style>
+  :root{--bg:#f6f4ef;--card:#fff;--ink:#1d2433;--mute:#667085;--line:#e3dfd5;--brand:#1f5f4a;--bad:#b42318;--ok:#067647}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif;padding:16px}
+  .wrap{max-width:560px;margin:0 auto}
+  h1{font-size:20px;margin:4px 0 2px}
+  p.sub{color:var(--mute);margin:0 0 14px;font-size:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  label{display:block;font-size:13px;color:var(--mute);margin:8px 0 4px}
+  input{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;font-size:16px}
+  button{width:100%;margin-top:10px;padding:12px;border:0;border-radius:8px;background:var(--brand);color:#fff;font-size:16px;font-weight:600}
+  button:disabled{opacity:.5}
+  button.alt{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+  .err{color:var(--bad);font-size:14px;margin-top:8px;white-space:pre-wrap}
+  .ok{color:var(--ok);font-size:14px;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:5px 0;border-bottom:1px solid var(--line)}
+  td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  pre{background:#f1efe8;padding:10px;border-radius:8px;font-size:12px;white-space:pre-wrap;max-height:220px;overflow:auto}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Import old VGM data</h1>
+  <p class="sub">Mission admin only. The file never leaves your phone except to go into your own private Firebase database. PINs are never imported.</p>
+
+  <div class="card" id="c-login">
+    <b>1. Sign in</b>
+    <label>Email</label><input id="email" type="email" autocomplete="username">
+    <label>Password</label><input id="pw" type="password" autocomplete="current-password">
+    <button id="b-login">Sign in</button>
+    <div class="err" id="e-login"></div>
+  </div>
+
+  <div class="card hide" id="c-file">
+    <b>2. Choose your backup file</b>
+    <p class="sub" style="margin:4px 0 0">Pick the <code>vgm.json</code> you exported from Firebase.</p>
+    <input id="file" type="file" accept=".json,application/json" style="margin-top:8px">
+    <div class="err" id="e-file"></div>
+  </div>
+
+  <div class="card hide" id="c-plan">
+    <b>3. Check, then import</b>
+    <table id="plan"></table>
+    <div class="err" id="e-plan"></div>
+    <button id="b-import">Import into Firestore</button>
+    <div class="ok" id="o-import"></div>
+    <pre id="log" class="hide"></pre>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+firebase.initializeApp(window.VGM_FIREBASE_CONFIG);
+const auth = firebase.auth(), db = firebase.firestore();
+
+let me = null, plan = null;
+
+// ── Sign in ────────────────────────────────────────────────
+$("b-login").onclick = async () => {
+  $("e-login").textContent = "";
+  try {
+    await auth.signInWithEmailAndPassword($("email").value.trim(), $("pw").value);
+  } catch (e) { $("e-login").textContent = e.message; }
+};
+auth.onAuthStateChanged(async u => {
+  if (!u) return;
+  try {
+    const snap = await db.collection("users").doc(u.uid).get();
+    me = snap.data();
+    if (!me || me.approved !== true || !["mission_admin", "system_engineer"].includes(me.role)) {
+      $("e-login").textContent = "This account is not a Mission Admin yet. Set role to mission_admin and approved to true on your user in Firestore, then sign in again.";
+      return;
+    }
+    $("c-login").classList.add("hide");
+    $("c-file").classList.remove("hide");
+  } catch (e) { $("e-login").textContent = e.message; }
+});
+
+// ── Helpers ────────────────────────────────────────────────
+const slug = s => String(s || "").toLowerCase().replace(/\bdistrict\b/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+const list = v => Array.isArray(v) ? v.filter(Boolean) : (v && typeof v === "object" ? Object.values(v).filter(Boolean) : []);
+const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || "");
+const clean = o => { const r = {}; for (const k in o) if (o[k] !== undefined) r[k] = o[k]; return r; };
+
+// ── Read file and build the plan ───────────────────────────
+$("file").onchange = async ev => {
+  $("e-file").textContent = "";
+  try {
+    const text = await ev.target.files[0].text();
+    const raw = JSON.parse(text);
+    const root = raw.vgm_v6 || raw;
+    plan = buildPlan(root);
+    showPlan();
+  } catch (e) { $("e-file").textContent = "Could not read that file: " + e.message; }
+};
+
+function buildPlan(root) {
+  const dMap = {}, used = new Set();
+  const districts = list(root.districts).map(d => {
+    let id = slug(d.name) || d.id; while (used.has(id)) id += "_x"; used.add(id);
+    dMap[d.id] = id;
+    return { id, data: { name: d.name, legacyId: d.id } };
+  });
+  const mapD = v => (v && dMap[v]) || null;
+
+  const churches = list(root.churches).map(c => ({
+    id: c.id, data: { name: c.name, districtId: mapD(c.districtId), legacyDistrictId: c.districtId || null }
+  }));
+  const churchDistrict = {};
+  churches.forEach(c => churchDistrict[c.id] = c.data.districtId);
+
+  const users = list(root.users);
+  const uName = {}; users.forEach(u => uName[u.id] = u.name || u.email);
+
+  const members = list(root.members).map(m => ({
+    id: m.id,
+    data: clean({
+      name: m.name || "", contact: m.contact || "", address: m.address || "",
+      gender: m.gender || "", dob: m.dob || "", baptized: !!m.baptized,
+      churchId: m.churchId || null, districtId: churchDistrict[m.churchId] || null,
+      addedBy: m.addedBy || null, fromUserId: m.fromUserId || null,
+      createdAt: m.createdAt || null, migrated: true
+    })
+  }));
+
+  const reports = list(root.reports).map(r => {
+    const x = Object.assign({}, r);
+    x.districtId = mapD(r.districtId) || churchDistrict[r.churchId] || null;
+    x.legacyDistrictId = r.districtId || null;
+    x.submitterName = uName[r.submittedBy] || null;
+    x.elderName = uName[r.elderBy] || null;
+    x.pastorName = uName[r.pastorBy] || null;
+    x.missName = uName[r.missBy] || null;
+    x.migrated = true;
+    delete x.id;
+    return { id: r.id, data: clean(x) };
+  });
+
+  const teams = list(root.teams).map(t => ({
+    id: t.id, data: clean(Object.assign({}, t, { id: undefined, districtId: mapD(t.districtId), legacyDistrictId: t.districtId || null, migrated: true }))
+  }));
+  const campaigns = list(root.campaigns).map(c => ({ id: c.id, data: clean(Object.assign({}, c, { id: undefined, migrated: true })) }));
+  const announcements = list(root.announcements).map(a => ({
+    id: a.id, data: clean(Object.assign({}, a, { id: undefined, authorName: uName[a.authorId] || null, migrated: true }))
+  }));
+  const broadcasts = list(root.broadcasts).map(b => ({
+    id: b.id, data: clean(Object.assign({}, b, { id: undefined, targetDid: mapD(b.targetDid) || b.targetDid || null, sentByName: uName[b.sentBy] || null, migrated: true }))
+  }));
+
+  // Invites: the person signs up with this email and gets this role. PINs are NOT copied.
+  const invites = [], skippedUsers = [], seen = new Set();
+  users.forEach(u => {
+    const email = String(u.email || "").trim().toLowerCase();
+    if (!validEmail(email) || seen.has(email)) { skippedUsers.push({ name: u.name, email: u.email, role: u.role }); return; }
+    seen.add(email);
+    invites.push({
+      id: email,
+      data: clean({
+        name: u.name || "", email, role: u.role, extraRoles: u.extraRoles || [],
+        districtId: mapD(u.districtId), churchId: u.churchId || null,
+        legacyId: u.id, createdAt: u.createdAt || null, migrated: true
+      })
+    });
+  });
+
+  const gallery = list(root.gallery);
+  return { districts, churches, members, reports, teams, campaigns, announcements, broadcasts, invites, skippedUsers, galleryCount: gallery.length };
+}
+
+function showPlan() {
+  const rows = [["Districts", plan.districts.length], ["Churches", plan.churches.length], ["Members", plan.members.length],
+    ["Visit reports", plan.reports.length], ["Teams", plan.teams.length], ["Campaigns", plan.campaigns.length],
+    ["Announcements", plan.announcements.length], ["Broadcast history", plan.broadcasts.length],
+    ["Users to invite", plan.invites.length]];
+  $("plan").innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
+  let note = "";
+  if (plan.skippedUsers.length)
+    note += "Users with no valid email (fix in the app later):\n" + plan.skippedUsers.map(u => `• ${u.name} — "${u.email}" (${u.role})`).join("\n") + "\n\n";
+  if (plan.galleryCount) note += `Gallery: ${plan.galleryCount} large photos are not in this import. They stay safe in your backup file.\n`;
+  $("e-plan").textContent = note;
+  $("c-plan").classList.remove("hide");
+}
+
+// ── Write everything ───────────────────────────────────────
+async function writeAll(col, items, log) {
+  for (let i = 0; i < items.length; i += 400) {
+    const batch = db.batch();
+    items.slice(i, i + 400).forEach(it => batch.set(db.collection(col).doc(it.id), it.data));
+    await batch.commit();
+  }
+  log(`${col}: wrote ${items.length}`);
+}
+
+$("b-import").onclick = async () => {
+  if (!plan) return;
+  const btn = $("b-import"); btn.disabled = true;
+  const logEl = $("log"); logEl.classList.remove("hide"); logEl.textContent = "";
+  const log = m => { logEl.textContent += m + "\n"; };
+  try {
+    const order = ["districts", "churches", "campaigns", "teams", "members", "reports", "announcements", "broadcasts", "invites"];
+    for (const col of order) await writeAll(col, plan[col], log);
+
+    // Check: count what is now in Firestore
+    log("\nChecking…");
+    let allGood = true;
+    for (const col of order) {
+      const snap = await db.collection(col).get();
+      const ok = snap.size >= plan[col].length;
+      if (!ok) allGood = false;
+      log(`${ok ? "✔" : "✘"} ${col}: ${snap.size} in database, ${plan[col].length} in file`);
+    }
+    $("o-import").textContent = allGood ? "Done. Everything in the file is now in your database." : "Some counts do not match. Send me this log.";
+  } catch (e) {
+    log("ERROR: " + e.message);
+    btn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>

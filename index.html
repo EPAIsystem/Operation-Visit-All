@@ -504,6 +504,10 @@ body {
     <h2>Registration Submitted</h2>
     <p class="info-note">Your account is awaiting approval from your District Pastor.<br>You will be redirected automatically once approved.</p>
     <div class="info-card" id="pending-info"></div>
+    <p class="info-note" id="verify-note">Already used the old VGM app? We sent a link to your email. Open it, then tap the button below and you will be let in with your old role.</p>
+    <button class="btn" id="btn-verified">I have verified my email</button>
+    <button class="btn btn-outline" id="btn-resend" style="margin-top:8px">Send the link again</button>
+    <div class="info-note" id="verify-msg"></div>
     <p class="info-note">Not approved after 24 hours? Contact your District Pastor directly.</p>
     <button class="btn btn-outline" id="btn-so-pending">Sign Out</button>
   </div>
@@ -661,23 +665,40 @@ if (FB_READY) {
 
 // ── VGM DISTRICTS ──────────────────────────────────────────
 const DISTRICTS = [
-  { id: 'peki',       name: 'Peki District' },
-  { id: 'hohoe',      name: 'Hohoe District' },
-  { id: 'kpando',     name: 'Kpando District' },
-  { id: 'ho_central', name: 'Ho Central District' },
-  { id: 'ho_west',    name: 'Ho West District' },
-  { id: 'jasikan',    name: 'Jasikan District' },
-  { id: 'keta',       name: 'Keta District' },
-  { id: 'sogakope',   name: 'Sogakope District' },
-  { id: 'aflao',      name: 'Aflao District' },
-  { id: 'denu',       name: 'Denu District' },
+  { id: 'peki', name: 'Peki District' },
+  { id: 'kpando', name: 'Kpando District' },
+  { id: 'ho_west', name: 'Ho West District' },
+  { id: 'ho_east', name: 'Ho East District' },
+  { id: 'aflao', name: 'Aflao District' },
+  { id: 'hohoe_east', name: 'Hohoe East District' },
+  { id: 'hohoe_west', name: 'Hohoe West District' },
+  { id: 'ho_city', name: 'Ho City District' },
+  { id: 'akatsi', name: 'Akatsi District' },
+  { id: 'anlo', name: 'Anlo District' },
+  { id: 'denu', name: 'Denu District' },
+  { id: 'sogakope', name: 'Sogakope District' },
+  { id: 'kpetoe', name: 'Kpetoe District' },
+  { id: 'adidome', name: 'Adidome District' },
+  { id: 'adaklu', name: 'Adaklu District' },
+  { id: 'dzodze', name: 'Dzodze District' },
 ];
 
 const ROLE_LABELS = {
-  mission_admin:   'Mission Admin',
+  mission_admin: 'Mission Admin',
+  system_engineer: 'System Engineer',
+  exec_secretary: 'Executive Secretary',
   district_pastor: 'District Pastor',
-  team_leader:     'Team Leader',
-  team_member:     'Team Member',
+  assoc_district_pastor: 'Assoc. District Pastor',
+  district_elder: 'District Elder',
+  assoc_district_elder: 'Assoc. District Elder',
+  church_elder: 'Church Elder',
+  elder: 'Elder',
+  church_leader: 'Church Leader',
+  action_unit_leader: 'Action Unit Leader',
+  small_group_leader: 'Small Group Leader',
+  visitation_team_leader: 'Visitation Team Leader',
+  team_leader: 'Team Leader',
+  team_member: 'Team Member',
 };
 
 const dName = id => DISTRICTS.find(d => d.id === id)?.name || id || '—';
@@ -766,6 +787,33 @@ function notConfigured() {
   document.getElementById('btn-reg').disabled = true;
 }
 
+// If the Mission or a pastor invited this email, the person gets that role as soon
+// as their email is verified. Nobody can grant themselves anything the invite does not say.
+let _claiming = false;
+async function tryClaimInvite(user, data) {
+  if (_claiming) return;
+  _claiming = true;
+  try {
+    await user.reload();
+    if (!user.emailVerified) return;
+    await user.getIdToken(true);
+    const inv = await db.collection('invites').doc(String(user.email).toLowerCase()).get();
+    if (!inv.exists) return;
+    const i = inv.data();
+    await db.collection('users').doc(user.uid).update({
+      role: i.role,
+      extraRoles: i.extraRoles || [],
+      districtId: i.districtId || null,
+      churchId: i.churchId || null,
+      approved: true,
+      status: 'approved',
+      processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      processedBy: 'invite',
+    });
+  } catch (e) { console.warn('invite check:', e.code || e.message); }
+  finally { _claiming = false; }
+}
+
 function onUser(user) {
   clearSubs();
   loading(false);
@@ -778,11 +826,13 @@ function onUser(user) {
       if (!snap.exists) { auth.signOut(); return; }
       const data = { uid: user.uid, ...snap.data() };
 
+      if (data.status === 'pending') { tryClaimInvite(user, data); }
+
       if (data.status === 'rejected') {
         renderRejected(data); show('rejected');
 
       } else if (data.status === 'approved') {
-        const isAdmin = data.role === 'mission_admin' || data.role === 'district_pastor';
+        const isAdmin = ['mission_admin','system_engineer','district_pastor','assoc_district_pastor'].includes(data.role);
         if (isAdmin) { renderAdmin(data); show('admin'); }
         else         { renderDashboard(data); show('dashboard'); }
 
@@ -805,6 +855,22 @@ if (FB_READY) { auth.onAuthStateChanged(onUser); } else { notConfigured(); }
 function signOut() { clearSubs(); auth.signOut(); }
 
 document.getElementById('btn-so-pending') .addEventListener('click', signOut);
+document.getElementById('btn-verified').addEventListener('click', async () => {
+  const u = auth.currentUser, msg = document.getElementById('verify-msg');
+  if (!u) return;
+  await u.reload();
+  if (!u.emailVerified) { msg.textContent = 'Your email is not verified yet. Open the link we sent, then try again.'; return; }
+  msg.textContent = 'Email verified. Checking for your old role…';
+  const snap = await db.collection('users').doc(u.uid).get();
+  await tryClaimInvite(u, snap.data());
+  setTimeout(() => { if (document.getElementById('screen-pending') && !document.getElementById('screen-pending').classList.contains('hidden')) msg.textContent = 'No old role found for this email, so your District Pastor will approve you.'; }, 2500);
+});
+document.getElementById('btn-resend').addEventListener('click', async () => {
+  const u = auth.currentUser, msg = document.getElementById('verify-msg');
+  if (!u) return;
+  try { await u.sendEmailVerification(); msg.textContent = 'Link sent. Check your inbox and spam folder.'; }
+  catch (e) { msg.textContent = 'Please wait a minute and try again.'; }
+});
 document.getElementById('btn-so-rejected').addEventListener('click', signOut);
 document.getElementById('btn-so-dash')    .addEventListener('click', signOut);
 document.getElementById('btn-so-admin')   .addEventListener('click', signOut);
@@ -927,6 +993,7 @@ document.getElementById('btn-reg').addEventListener('click', async () => {
       processedBy:     null,
       rejectionReason: null,
     });
+    try { await cred.user.sendEmailVerification(); } catch (_) {}
     // auth.onAuthStateChanged picks up and routes to pending screen
   } catch (e) {
     loading(false);
