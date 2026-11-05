@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Volta Ghana Mission Database</title>
+<title>VGMDS · Volta Ghana Mission Digital System</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0b6b5a">
+
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -307,6 +312,26 @@ body {
 .el-actions { display: flex; gap: 8px; margin-bottom: 12px; }
 .el-actions .btn { flex: 1; margin-top: 0; }
 .el-count { font-size: 12px; color: var(--muted); margin: 2px 0 4px; }
+.dept-h { font-size: 15px; font-weight: 700; margin: 18px 4px 8px; color: var(--teal-dk); }
+.dept-card { background: #fff; border: 1.5px solid var(--border, #d6e4df); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+.dept-card h4 { margin: 0 0 4px; font-size: 18px; }
+.dept-note { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+.tile { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 68px; margin-top: 10px;
+  padding: 12px 14px; border: 2px solid var(--teal); border-radius: 14px; background: var(--teal-lt);
+  font-size: 18px; font-weight: 700; color: var(--teal-dk); text-align: left; cursor: pointer; }
+.tile .ic { font-size: 30px; }
+.tile small { display: block; font-weight: 500; font-size: 13px; color: var(--muted); }
+.tile[disabled] { opacity: .55; cursor: default; border-style: dashed; }
+.big-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 56px;
+  margin-top: 10px; border-radius: 14px; border: 2px solid var(--teal); background: #fff; color: var(--teal-dk);
+  font-size: 18px; font-weight: 700; cursor: pointer; }
+.big-btn.fill { background: var(--teal); color: #fff; }
+.share-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; margin-top: 8px; padding: 10px 14px;
+  border-radius: 14px; border: 2px solid var(--teal); background: #fff; font-size: 17px; font-weight: 600; cursor: pointer; text-align: left; }
+.share-row.on { background: var(--teal-lt); }
+.share-row .box { font-size: 26px; }
+.el-pastor { font-size: 14px; color: var(--muted); margin: -2px 4px 6px; }
+.back-btn { background: none; border: 0; font-size: 17px; font-weight: 700; color: var(--teal-dk); padding: 8px 2px; cursor: pointer; }
 .el-group {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
@@ -426,7 +451,7 @@ body {
 <div id="screen-auth" class="screen hidden">
   <div class="app-head">
     <div class="app-head-mark">⛪</div>
-    <h1>Volta Ghana Mission Database</h1>
+    <h1>Volta Ghana Mission Digital System</h1>
     <p>Seventh-day Adventist Church</p>
   </div>
   <div class="card-body">
@@ -477,6 +502,7 @@ body {
         <optgroup label="Mission Office">
           <option value="mission_admin">Mission Admin (President)</option>
           <option value="exec_secretary">Executive Secretary</option>
+          <option value="ministerial_secretary">Ministerial Secretary</option>
           <option value="system_engineer">System Engineer</option>
         </optgroup>
         <optgroup label="District">
@@ -552,7 +578,7 @@ body {
   <div class="bar">
     <div>
       <h2 id="d-greet">Welcome</h2>
-      <p>Volta Ghana Mission Database</p>
+      <p>Volta Ghana Mission Digital System</p>
     </div>
     <button class="btn-ghost" id="btn-so-dash">↩</button>
   </div>
@@ -560,7 +586,7 @@ body {
     <div class="access-card">
       <div class="icon">✅</div>
       <h3>Account Activated</h3>
-      <p>Your registration has been approved. You now have access to the Volta Ghana Mission Database.</p>
+      <p>Your registration has been approved. You now have access to the Volta Ghana Mission Digital System.</p>
       <div class="tag-row">
         <span class="tag">👤 <span id="d-role">—</span></span>
         <span class="tag">📍 <span id="d-dist">—</span></span>
@@ -586,11 +612,25 @@ body {
       Pending <span class="count-dot hidden" id="pcount">0</span>
     </button>
     <button class="a-tab" id="at-all">All Users</button>
-    <button class="a-tab" id="at-elders">Elders</button>
+    <button class="a-tab" id="at-depts">🏢 Departments</button>
+    <button class="a-tab hidden" id="at-elders">Elders</button>
   </div>
   <div class="panel" id="panel-pending"><div id="pending-list"></div></div>
   <div class="panel hidden" id="panel-all"><div id="all-list"></div></div>
+  <div class="panel hidden" id="panel-depts"><div id="dept-list"></div></div>
   <div class="panel hidden" id="panel-elders">
+    <button class="back-btn" id="el-back">← Departments</button>
+    <h3 style="margin:4px 0 0">👴 Elders</h3>
+    <div id="el-share-box" class="hidden">
+      <p class="dept-note" style="margin-top:10px">Who else may see the elders' information?<br>Tap to turn on or off.</p>
+      <button class="share-row" id="sh-pastors"><span class="box">⬜</span><span>District Pastors<br><small style="font-weight:400;color:var(--muted)">Each pastor sees only their own district</small></span></button>
+      <button class="share-row" id="sh-exec"><span class="box">⬜</span><span>Executive Secretary</span></button>
+    </div>
+    <p class="dept-note" style="margin-top:14px">Send this link to the elders. They fill the form on their phone and it comes here.</p>
+    <button class="big-btn fill" id="el-share">📤 Share the form link</button>
+    <button class="big-btn" id="el-wa">💬 Send on WhatsApp</button>
+    <button class="big-btn" id="el-copy">📋 Copy the link</button>
+
     <div class="el-stats" id="el-stats"></div>
     <div class="field">
       <input type="search" id="el-search" placeholder="Search name, church, phone or reference" autocomplete="off">
@@ -599,8 +639,7 @@ body {
       <select id="el-district" aria-label="Filter by district"></select>
     </div>
     <div class="el-actions">
-      <button class="btn btn-outline btn-sm" id="el-copy">Copy form link</button>
-      <button class="btn btn-primary btn-sm" id="el-export">Export CSV</button>
+      <button class="btn btn-primary btn-sm" id="el-export">⬇ Download list (Excel)</button>
     </div>
     <p class="el-count" id="el-count"></p>
     <div id="el-list"></div>
@@ -634,6 +673,7 @@ body {
         <optgroup label="Mission Office">
           <option value="mission_admin">Mission Admin (President)</option>
           <option value="exec_secretary">Executive Secretary</option>
+          <option value="ministerial_secretary">Ministerial Secretary</option>
           <option value="system_engineer">System Engineer</option>
         </optgroup>
         <optgroup label="District">
@@ -718,11 +758,13 @@ const DISTRICTS = [
   { id: 'dzodze', name: 'Dzodze District' },
 ];
 
-const MISSION_ROLES = ['mission_admin','system_engineer','exec_secretary'];
+const MISSION_ROLES = ['mission_admin','system_engineer','exec_secretary','ministerial_secretary'];
+const DISTRICT_LEAD_ROLES = ['district_pastor','assoc_district_pastor','district_elder','assoc_district_elder'];
 const ROLE_LABELS = {
   mission_admin: 'Mission Admin',
   system_engineer: 'System Engineer',
   exec_secretary: 'Executive Secretary',
+  ministerial_secretary: 'Ministerial Secretary',
   district_pastor: 'District Pastor',
   assoc_district_pastor: 'Assoc. District Pastor',
   district_elder: 'District Elder',
@@ -786,6 +828,7 @@ let _subs = [];
 let _eldersUnsub = null;
 let _elders = [];
 function clearSubs() {
+  _shareUnsub = null; _deptUnsub = null; _actUnsub = null; _acts = []; _shareRoles = []; _depts = [];
   _subs.forEach(fn => { try { fn(); } catch(_){} });
   _subs = [];
   _eldersUnsub = null;
@@ -870,7 +913,7 @@ function onUser(user) {
         renderRejected(data); show('rejected');
 
       } else if (data.status === 'approved') {
-        const isAdmin = ['mission_admin','system_engineer','exec_secretary','district_pastor','assoc_district_pastor'].includes(data.role);
+        const isAdmin = ['mission_admin','system_engineer','exec_secretary','ministerial_secretary','district_pastor','assoc_district_pastor'].includes(data.role);
         if (isAdmin) { renderAdmin(data); show('admin'); }
         else         { renderDashboard(data); show('dashboard'); }
 
@@ -1094,6 +1137,7 @@ function renderDashboard(data) {
 // ══════════════════════════════════════════════════════════
 function renderAdmin(data) {
   _adminData = data;
+  watchShares();
   document.getElementById('a-title').textContent =
     MISSION_ROLES.includes(data.role) ? 'Mission Panel · ' + rName(data.role) : 'District Pastor Panel';
   document.getElementById('a-sub').textContent =
@@ -1248,16 +1292,206 @@ async function loadAllUsers() {
 
 // ── Admin tab switching ────────────────────────────────────
 function adminTab(name) {
-  ['pending', 'all', 'elders'].forEach(n => {
-    document.getElementById('at-' + n).classList.toggle('active', n === name);
+  ['pending', 'all', 'depts', 'elders'].forEach(n => {
+    document.getElementById('at-' + n).classList.toggle('active', n === name || (name === 'elders' && n === 'depts'));
     document.getElementById('panel-' + n).classList.toggle('hidden', n !== name);
   });
   if (name === 'all') loadAllUsers();
+  if (name === 'depts') startDepts();
   if (name === 'elders') startElders();
 }
-['pending', 'all', 'elders'].forEach(n =>
+['pending', 'all', 'depts'].forEach(n =>
   document.getElementById('at-' + n).addEventListener('click', () => adminTab(n))
 );
+document.getElementById('el-back').addEventListener('click', () => adminTab('depts'));
+
+// ══════════════════════════════════════════════════════════
+// DEPARTMENTS + WHO MAY SEE WHAT
+// The Ministerial Secretary department owns the Elders form.
+// President, System Engineer and Ministerial Secretary always see it.
+// Everyone else only if they are shared in (doc: shares/elders_biodata).
+// ══════════════════════════════════════════════════════════
+let _shareRoles = [];
+let _depts = [];
+let _shareUnsub = null, _deptUnsub = null, _actUnsub = null;
+let _acts = [];
+
+function engineerOk() { return _adminData && _adminData.role === 'system_engineer' && !_adminData.restricted; }
+function isDeptAdmin() { return _adminData && (_adminData.role === 'mission_admin' || engineerOk()); }
+function isElderManager() {
+  return _adminData && (_adminData.role === 'mission_admin' || _adminData.role === 'ministerial_secretary' || engineerOk());
+}
+function canSeeElders() { return isElderManager() || (_adminData && _shareRoles.includes(_adminData.role)); }
+function seesAllDistricts() { return !(_adminData && DISTRICT_LEAD_ROLES.includes(_adminData.role)); }
+
+function watchShares() {
+  if (_shareUnsub) return;
+  _shareUnsub = db.collection('shares').doc('elders_biodata').onSnapshot(s => {
+    _shareRoles = (s.exists && Array.isArray(s.data().roles)) ? s.data().roles : [];
+    paintShares(); renderDepts();
+  }, () => {});
+  _subs.push(_shareUnsub);
+}
+
+function paintShares() {
+  const has = r => _shareRoles.includes(r);
+  const set = (id, on) => {
+    const b = document.getElementById(id); if (!b) return;
+    b.classList.toggle('on', on);
+    b.querySelector('.box').textContent = on ? '✅' : '⬜';
+  };
+  set('sh-pastors', has('district_pastor'));
+  set('sh-exec', has('exec_secretary'));
+}
+
+async function toggleShare(roles, btnId) {
+  if (!isElderManager()) return;
+  const on = roles.every(r => _shareRoles.includes(r));
+  const next = on ? _shareRoles.filter(r => !roles.includes(r)) : Array.from(new Set(_shareRoles.concat(roles)));
+  try {
+    await db.collection('shares').doc('elders_biodata').set({
+      roles: next, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), updatedBy: _adminData.uid
+    });
+    toast(on ? 'Turned off' : 'Turned on ✓', 'ok');
+  } catch (e) { toast('Could not save. Try again.', 'err'); }
+}
+document.getElementById('sh-pastors').addEventListener('click', () => toggleShare(['district_pastor', 'assoc_district_pastor'], 'sh-pastors'));
+document.getElementById('sh-exec').addEventListener('click', () => toggleShare(['exec_secretary'], 'sh-exec'));
+
+const DEPT_LEVELS = [
+  ['mission', '🏛️ Mission departments'],
+  ['district', '⛪ District departments'],
+  ['church', '🏠 Church departments'],
+];
+
+function startDepts() {
+  watchShares();
+  if (_deptUnsub) { renderDepts(); return; }
+  _deptUnsub = db.collection('departments').onSnapshot(snap => {
+    _depts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (isDeptAdmin()) seedDepts();
+    renderDepts();
+  }, err => {
+    document.getElementById('dept-list').innerHTML =
+      `<div class="empty"><div class="e-icon">⚠️</div><h3>Could not load</h3><p>${esc(err.message)}</p></div>`;
+  });
+  _subs.push(_deptUnsub);
+  _actUnsub = db.collection('activities').onSnapshot(snap => {
+    _acts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (isDeptAdmin()) seedDepts();
+    renderDepts();
+  }, () => {});
+  _subs.push(_actUnsub);
+}
+
+const SEED_DEPTS = [
+  { id: 'ministerial', name: 'Ministerial Secretary', order: 1 },
+  { id: 'evangelism', name: 'Evangelism', order: 2 },
+  { id: 'president_initiatives', name: "President's Special Initiatives", order: 3 },
+];
+function seedDepts() {
+  SEED_DEPTS.forEach(s => {
+    if (!_depts.some(d => d.id === s.id)) {
+      db.collection('departments').doc(s.id).set({
+        name: s.name, level: 'mission', builtin: true, order: s.order,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(() => {});
+    }
+  });
+  if (_depts.length && !_acts.some(a => a.id === 'visit_all')) {
+    db.collection('activities').doc('visit_all').set({
+      deptId: 'evangelism', name: 'Operation Visit All', key: 'visit_all', builtin: true, order: 1,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
+  }
+}
+
+const DEPT_ICON = { evangelism: '📣', president_initiatives: '⭐' };
+
+function renderDepts() {
+  const box = document.getElementById('dept-list');
+  if (!box || !_adminData) return;
+  let html = '';
+  DEPT_LEVELS.forEach(([level, title]) => {
+    const rows = _depts.filter(d => d.level === level).sort((a, b) => (a.order || 99) - (b.order || 99) || String(a.name).localeCompare(String(b.name)));
+    html += `<div class="dept-h">${title}</div>`;
+    rows.forEach(d => {
+      if (d.id === 'ministerial') {
+        if (!canSeeElders()) return;
+        html += `<div class="dept-card"><h4>📖 ${esc(d.name)}</h4>
+          <p class="dept-note">Forms and reports for ministers.</p>
+          <button class="tile" data-go="elders"><span class="ic">👴</span><span>Elders<small>Open the elders' information</small></span></button>
+          <button class="tile" disabled><span class="ic">🙏</span><span>Pastors<small>Coming soon</small></span></button>
+          <button class="tile" disabled><span class="ic">👩</span><span>Shepherdesses<small>Coming soon</small></span></button>
+        </div>`;
+      } else {
+        const acts = _acts.filter(a => a.deptId === d.id).sort((a, b) => (a.order || 99) - (b.order || 99) || String(a.name).localeCompare(String(b.name)));
+        html += `<div class="dept-card"><h4>${DEPT_ICON[d.id] || '📁'} ${esc(d.name)}</h4>`;
+        if (!acts.length) html += '<p class="dept-note">No activities yet.</p>';
+        acts.forEach(a => {
+          html += `<button class="tile" data-act="${esc(a.id)}"><span class="ic">${a.key === 'visit_all' ? '🚶' : '📌'}</span><span>${esc(a.name)}<small>${a.key === 'visit_all' ? 'Visit reports, members, teams' : 'Open'}</small></span></button>`;
+          if (isDeptAdmin() && !a.builtin) html += `<button class="big-btn" data-delact="${esc(a.id)}" style="min-height:40px;font-size:14px;margin-top:4px">🗑 Remove “${esc(a.name)}”</button>`;
+        });
+        if (isDeptAdmin()) html += `<button class="big-btn" data-addact="${esc(d.id)}">➕ Add an activity</button>`;
+        if (isDeptAdmin() && !d.builtin) html += `<button class="big-btn" data-del="${esc(d.id)}" style="min-height:44px;font-size:15px">🗑 Remove department</button>`;
+        html += '</div>';
+      }
+    });
+    if (!rows.some(d => d.id !== 'ministerial') && !rows.length) html += '<p class="dept-note">None yet.</p>';
+    if (isDeptAdmin()) html += `<button class="big-btn" data-add="${level}">➕ Add a department</button>`;
+  });
+  box.innerHTML = html;
+}
+
+document.getElementById('dept-list').addEventListener('click', async ev => {
+  const go = ev.target.closest('[data-go]');
+  if (go && go.dataset.go === 'elders') { adminTab('elders'); return; }
+  const act = ev.target.closest('[data-act]');
+  if (act) {
+    const a = _acts.find(x => x.id === act.dataset.act);
+    if (a && a.key === 'visit_all') toast('Members and visit reports open here next. Your data is safe.', 'ok');
+    return;
+  }
+  const addAct = ev.target.closest('[data-addact]');
+  if (addAct) {
+    const name = (window.prompt('Name of the new activity:') || '').trim();
+    if (name.length < 2) return;
+    try {
+      await db.collection('activities').add({
+        deptId: addAct.dataset.addact, name: name.slice(0, 80), order: 50,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      toast('Activity added ✓', 'ok');
+    } catch (e) { toast('Could not add.', 'err'); }
+    return;
+  }
+  const delAct = ev.target.closest('[data-delact]');
+  if (delAct) {
+    if (window.confirm('Remove this activity?')) {
+      try { await db.collection('activities').doc(delAct.dataset.delact).delete(); toast('Removed', 'ok'); }
+      catch (e) { toast('Could not remove.', 'err'); }
+    }
+    return;
+  }
+  const add = ev.target.closest('[data-add]');
+  if (add) {
+    const name = (window.prompt('Name of the new department:') || '').trim();
+    if (name.length < 2) return;
+    try {
+      await db.collection('departments').add({
+        name: name.slice(0, 80), level: add.dataset.add, order: 50,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      toast('Department added ✓', 'ok');
+    } catch (e) { toast('Could not add.', 'err'); }
+    return;
+  }
+  const del = ev.target.closest('[data-del]');
+  if (del && window.confirm('Remove this department?')) {
+    try { await db.collection('departments').doc(del.dataset.del).delete(); toast('Removed', 'ok'); }
+    catch (e) { toast('Could not remove.', 'err'); }
+  }
+});
 
 // ══════════════════════════════════════════════════════════
 // ELDERS REGISTER
@@ -1270,7 +1504,7 @@ const OTHER_KEY = '__other';
 // [label, field, kind]  (kind: tel, mail, date)
 const EL_SECTIONS = [
   ['Personal', [['Gender','gender'],['Date of birth','dateOfBirth'],['Hometown','hometown'],['Residence','residence']]],
-  ['Church', [['District','district'],['Church','church']]],
+  ['Church', [['District','district'],['Church','church'],['District Pastor','districtPastor']]],
   ['Contact', [['Phone','phone','tel'],['WhatsApp','whatsapp','tel'],['Email','email','mail']]],
   ['Family', [['Marital status','maritalStatus'],['Spouse','spouseName'],['Spouse contact','spouseContact','tel'],['Children','childrenCount']]],
   ['Ordination', [['Date','ordinationDate'],['Place','ordinationPlace'],['Ordained by','ordainedBy']]],
@@ -1301,8 +1535,10 @@ function elTime(e) {
 
 function startElders() {
   if (!_adminData) return;
-  const isAdmin = MISSION_ROLES.includes(_adminData.role);
+  const isAdmin = seesAllDistricts();
   document.getElementById('el-dist-wrap').classList.toggle('hidden', !isAdmin);
+  document.getElementById('el-share-box').classList.toggle('hidden', !isElderManager());
+  paintShares();
   if (_eldersUnsub) { renderElders(); return; }
 
   document.getElementById('el-list').innerHTML =
@@ -1339,7 +1575,7 @@ function elFiltered() {
 }
 
 function renderElders() {
-  const isAdmin = _adminData && MISSION_ROLES.includes(_adminData.role);
+  const isAdmin = seesAllDistricts();
 
   // Stats (always for everything this user can see)
   const week = Date.now() - 7 * 24 * 3600 * 1000;
@@ -1372,7 +1608,7 @@ function renderElders() {
 
   const list = document.getElementById('el-list');
   if (_elders.length === 0) {
-    list.innerHTML = `<div class="empty"><div class="e-icon">📋</div><h3>No elder forms yet</h3><p>Tap “Copy form link” and send it to the elders.</p></div>`;
+    list.innerHTML = `<div class="empty"><div class="e-icon">📋</div><h3>No elder forms yet</h3><p>Go back, tap “Share the form link” and send it to the elders.</p></div>`;
     return;
   }
   if (rows.length === 0) {
@@ -1387,7 +1623,11 @@ function renderElders() {
   list.innerHTML = order.map(k => {
     const label = k === OTHER_KEY ? 'Other / not matched' : dName(k);
     const items = groups[k].sort((a, b) => elVal(a, 'fullName').localeCompare(elVal(b, 'fullName')));
-    return `<div class="el-group">${esc(label)} <span>${items.length}</span></div>` +
+    const tally = {};
+    items.forEach(e => { const p = elVal(e, 'districtPastor'); if (p) tally[p] = (tally[p] || 0) + 1; });
+    const pastor = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0] || '';
+    return `<div class="el-group">${esc(label)} <span>${items.length} elders</span></div>` +
+      `<div class="el-pastor">🧑‍🏫 District Pastor: ${esc(pastor || 'not written on the forms yet')}</div>` +
       items.map(e => {
         const sub = [elVal(e, 'church'), k === OTHER_KEY ? elVal(e, 'district') : '', elVal(e, 'phone')]
           .filter(Boolean).join(' · ');
@@ -1442,19 +1682,28 @@ document.getElementById('el-search').addEventListener('input', renderElders);
 document.getElementById('el-district').addEventListener('change', renderElders);
 
 // ── Share the form link ────────────────────────────────────
+const elderLink = () => new URL('elders.html', location.href).href;
+const elderMsg = () => 'Volta Ghana Mission: please fill in your Elder Biodata form on your phone.\n' + elderLink();
 document.getElementById('el-copy').addEventListener('click', async () => {
-  const link = new URL('elders.html', location.href).href;
-  try {
-    await navigator.clipboard.writeText(link);
-    toast('Form link copied', 'ok');
-  } catch (_) {
-    window.prompt('Copy this link and send it to the elders:', link);
+  try { await navigator.clipboard.writeText(elderLink()); toast('Link copied ✓', 'ok'); }
+  catch (_) { window.prompt('Copy this link and send it to the elders:', elderLink()); }
+});
+document.getElementById('el-share').addEventListener('click', async () => {
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Elders Biodata Form', text: 'Volta Ghana Mission: please fill in your Elder Biodata form.', url: elderLink() }); }
+    catch (_) { /* person closed the share sheet */ }
+  } else {
+    try { await navigator.clipboard.writeText(elderLink()); toast('Link copied ✓', 'ok'); }
+    catch (_) { window.prompt('Copy this link and send it to the elders:', elderLink()); }
   }
+});
+document.getElementById('el-wa').addEventListener('click', () => {
+  window.open('https://wa.me/?text=' + encodeURIComponent(elderMsg()), '_blank', 'noopener');
 });
 
 // ── CSV export (opens in Excel) ────────────────────────────
 const EL_EXPORT = [
-  ['Reference','refNo'],['District','district'],['Church','church'],['Full name','fullName'],['Gender','gender'],
+  ['Reference','refNo'],['District','district'],['District Pastor','districtPastor'],['Church','church'],['Full name','fullName'],['Gender','gender'],
   ['Date of birth','dateOfBirth'],['Hometown','hometown'],['Residence','residence'],['Phone','phone'],
   ['WhatsApp','whatsapp'],['Email','email'],['Marital status','maritalStatus'],['Spouse','spouseName'],
   ['Spouse contact','spouseContact'],['Children','childrenCount'],['Ordination date','ordinationDate'],
