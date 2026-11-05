@@ -481,9 +481,25 @@ body {
 .fm-act button,.fm-add button{font:600 15px system-ui;min-height:44px;padding:0 12px;border-radius:10px;border:1.5px solid var(--teal);background:#fff;color:var(--teal)}
 .fm-add{display:flex;flex-wrap:wrap;gap:8px}
 .fm-resp{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}
+
+.so-btn{width:auto!important;border-radius:18px!important;padding:0 14px;font-size:13px!important;font-weight:600;white-space:nowrap}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:92px!important}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);height:38px;padding:0 10px;border:0;border-radius:8px;background:var(--teal-lt);color:var(--teal);font:600 13px system-ui;cursor:pointer}
+#offline-bar{position:fixed;top:0;left:0;right:0;z-index:9999;background:#b3322b;color:#fff;text-align:center;padding:6px 10px;font-size:14px;font-weight:600}
+
+.hp-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.hp-card h3{margin:0 0 8px;font-size:18px;color:var(--teal-dk)}
+.hp-fig{background:var(--teal-lt);border-radius:12px;padding:14px;margin:8px 0 10px;text-align:center;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.hp-btn{display:inline-block;background:var(--teal);color:#fff;border-radius:12px;padding:10px 14px;font-weight:600;font-size:15px}
+.hp-btn.o{background:#fff;color:var(--teal);border:2px solid var(--teal)}
+.hp-arrow{font-size:26px;color:var(--teal-dk)}
+.hp-phone{display:inline-flex;gap:6px;align-items:center;background:#fff;border:2px solid var(--teal-dk);border-radius:16px;padding:8px 12px}
+.hp-card ol{margin:6px 0 0;padding-left:22px;line-height:1.7;font-size:16px}
 </style>
 </head>
 <body>
+<div id="offline-bar" class="hidden">📴 No internet. Your changes will wait until you are online.</div>
 
 <!-- ── LOADING OVERLAY ─────────────────────────────── -->
 <div id="loader"><div class="spinner"></div></div>
@@ -623,7 +639,7 @@ body {
       <h2 id="d-greet">Welcome</h2>
       <p>Volta Ghana Mission Digital System</p>
     </div>
-    <button class="btn-ghost" id="btn-so-dash">↩</button>
+    <button class="btn-ghost so-btn" id="btn-menu-dash">☰ Menu</button>
   </div>
   <div class="dash-body">
     <div class="access-card">
@@ -639,6 +655,80 @@ body {
     <button class="tile" id="btn-open-forms"><span class="ic">📝</span><span>Forms<small>Make a form and collect answers</small></span></button>
     <button class="tile" id="btn-open-ova"><span class="ic">🚶</span><span>Operation Visit All<small>Visit reports, members, teams</small></span></button>
   </div>
+</div>
+
+
+<!-- MENU, DETAILS, PASSWORD, INSTALL -->
+<div id="mod-menu" class="modal-bg hidden">
+  <div class="modal tall">
+    <div class="modal-handle"></div>
+    <h3 id="mn-name">Menu</h3>
+    <p class="sub" id="mn-sub"></p>
+    <button class="tile" id="mn-home"><span class="ic">🏠</span><span>Home<small>Go to the first screen</small></span></button>
+    <button class="tile" id="mn-help"><span class="ic">❓</span><span>Help<small>Pictures that show how to use the app</small></span></button>
+    <button class="tile" id="mn-me"><span class="ic">👤</span><span>My details<small>Change my name or phone</small></span></button>
+    <button class="tile" id="mn-pw"><span class="ic">🔑</span><span>Change password<small>Choose a new password</small></span></button>
+    <div class="tile" style="display:block;min-height:0;cursor:default">
+      <div style="font-weight:600;margin-bottom:8px">🔠 Size of words</div>
+      <div class="fm-add"><button type="button" data-zoom="1">Normal</button><button type="button" data-zoom="1.15">Big</button><button type="button" data-zoom="1.3">Very big</button></div>
+    </div>
+    <button class="tile" id="mn-install"><span class="ic">📲</span><span>Put the app on my phone<small>Open it like WhatsApp, from the home screen</small></span></button>
+    <button class="tile" id="mn-share"><span class="ic">📤</span><span>Send the app to a friend<small>Share the link</small></span></button>
+    <button class="tile" id="mn-out"><span class="ic">⎋</span><span>Sign out<small>Leave the app on this phone</small></span></button>
+    <div class="modal-actions"><button class="btn btn-outline btn-sm" id="mod-menu-close">Close</button></div>
+  </div>
+</div>
+
+<div id="mod-me" class="modal-bg hidden">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>My details</h3>
+    <div class="field"><label>Name</label><input type="text" id="me-name" maxlength="80" autocomplete="name"></div>
+    <div class="field"><label>Phone</label><input type="tel" id="me-phone" maxlength="20" autocomplete="tel"></div>
+    <p class="err" id="me-err"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" id="mod-me-cancel">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="me-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="mod-pw" class="modal-bg hidden">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>Change password</h3>
+    <div class="field"><label>Password now</label><input type="password" id="pw-old" autocomplete="current-password"></div>
+    <div class="field"><label>New password (6 or more letters or numbers)</label><input type="password" id="pw-new" autocomplete="new-password"></div>
+    <div class="field"><label>New password again</label><input type="password" id="pw-new2" autocomplete="new-password"></div>
+    <p class="err" id="pw-err"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" id="mod-pw-cancel">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="pw-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="mod-install" class="modal-bg hidden">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>📲 Put the app on your phone</h3>
+    <p class="sub">Your phone did not offer the install box. Do this:</p>
+    <ol style="padding-left:20px;line-height:1.7;font-size:16px">
+      <li>Tap the <b>⋮</b> (three dots) at the top right of Chrome.</li>
+      <li>Tap <b>Add to Home screen</b> or <b>Install app</b>.</li>
+      <li>Tap <b>Add</b>. The VGMDS icon will appear on your home screen.</li>
+    </ol>
+    <p class="sub">On an iPhone: tap the Share button, then <b>Add to Home Screen</b>.</p>
+    <div class="modal-actions"><button class="btn btn-primary btn-sm" id="mod-install-close">OK</button></div>
+  </div>
+</div>
+
+<div id="screen-help" class="screen hidden">
+  <div class="bar">
+    <div><h2>❓ Help</h2><p>How to use the app</p></div>
+    <button class="btn-ghost" id="help-back">←</button>
+  </div>
+  <div class="ova-body" id="help-body"></div>
 </div>
 
 <div id="screen-dir" class="screen hidden">
@@ -681,7 +771,7 @@ body {
       <h2 id="a-title">Admin Panel</h2>
       <p id="a-sub">Approval Dashboard</p>
     </div>
-    <button class="btn-ghost" id="btn-so-admin">↩</button>
+    <button class="btn-ghost so-btn" id="btn-menu-admin">☰ Menu</button>
   </div>
   <div class="admin-tabs">
     <button class="a-tab active" id="at-pending">
@@ -904,7 +994,7 @@ fillDistrictSelect('mod-a-dist');
 (function(){ var o=document.createElement('option'); o.value='mission'; o.textContent='Mission Office (all districts)'; document.getElementById('mod-a-dist').appendChild(o); })();
 
 // ── SCREEN MANAGER ─────────────────────────────────────────
-const SCREENS = ['auth','pending','rejected','dashboard','admin','ova','forms','dir'];
+const SCREENS = ['auth','pending','rejected','dashboard','admin','ova','forms','dir','help'];
 let _dashData = null;
 function show(id) {
   SCREENS.forEach(s =>
@@ -1036,12 +1126,20 @@ function onUser(user) {
   _subs.push(unsub);
 }
 
-if (FB_READY) { auth.onAuthStateChanged(onUser); } else { notConfigured(); }
+if (FB_READY) {
+  // Stay signed in on this phone until the person taps Sign out
+  let _p = Promise.resolve();
+  try { _p = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch (_) {}
+  Promise.resolve(_p).catch(() => {}).then(() => auth.onAuthStateChanged(onUser));
+} else { notConfigured(); }
 
 // ══════════════════════════════════════════════════════════
 // SIGN OUT
 // ══════════════════════════════════════════════════════════
-function signOut() { clearSubs(); auth.signOut(); }
+function signOut() {
+  if (!window.confirm('Sign out? You will need your password to sign in again.')) return;
+  clearSubs(); auth.signOut();
+}
 
 document.getElementById('btn-so-pending') .addEventListener('click', signOut);
 document.getElementById('btn-verified').addEventListener('click', async () => {
@@ -1064,8 +1162,6 @@ document.getElementById('btn-so-rejected').addEventListener('click', signOut);
 document.getElementById('btn-open-ova').addEventListener('click', () => openOva(_dashData, 'dashboard'));
 document.getElementById('btn-open-dir').addEventListener('click', () => openDirectory(_dashData, 'dashboard'));
 document.getElementById('btn-open-forms').addEventListener('click', () => openForms(_dashData, {}, 'dashboard'));
-document.getElementById('btn-so-dash')    .addEventListener('click', signOut);
-document.getElementById('btn-so-admin')   .addEventListener('click', signOut);
 
 // ══════════════════════════════════════════════════════════
 // AUTH TABS
@@ -1592,11 +1688,13 @@ function renderDepts() {
         if (!canSeeElders()) return;
         html += `<div class="dept-card"><h4>📖 ${esc(d.name)}</h4>
           <p class="dept-note">Forms and reports for ministers.</p>
-          <button class="tile" data-go="elders"><span class="ic">👴</span><span>Elders<small>Open the elders' information</small></span></button>
-          <button class="tile" data-rec="pastor"><span class="ic">🙏</span><span>Pastors<small>Open the pastors' information</small></span></button>
-          <button class="tile" data-rec="shepherdess"><span class="ic">👩</span><span>Shepherdesses<small>Open the shepherdesses' information</small></span></button>
           <button class="tile" data-rec="officer"><span class="ic">🏛️</span><span>Officers<small>Mission officers</small></span></button>
           <button class="tile" data-rec="director"><span class="ic">🧭</span><span>Directors<small>Department directors</small></span></button>
+          <button class="tile" data-rec="pastor"><span class="ic">🙏</span><span>Pastors<small>District pastors and ministers</small></span></button>
+          <button class="tile" data-rec="shepherdess"><span class="ic">👩</span><span>Shepherdesses<small>Pastors' wives and shepherdesses</small></span></button>
+          <button class="tile" data-go="elders"><span class="ic">👴</span><span>Elders<small>Open the elders' information</small></span></button>
+          <button class="tile" data-rec="deacon"><span class="ic">🕊️</span><span>Deacons<small>Deacons and deaconesses</small></span></button>
+          <button class="tile" data-rec="worker"><span class="ic">🛠️</span><span>Workers<small>Everyone holding a portfolio: church, district or mission</small></span></button>
           <button class="tile" data-act-members="1"><span class="ic">👥</span><span>Members<small>Church members</small></span></button>
           <button class="tile" data-rec="all"><span class="ic">📅</span><span>Who served in…?<small>Pick a year, see everyone then</small></span></button>
           <button class="tile" data-forms="${esc(d.id)}" data-fname="${esc(d.name)}"><span class="ic">📝</span><span>Forms<small>Make and share a form</small></span></button>
@@ -1937,13 +2035,13 @@ document.getElementById('el-export').addEventListener('click', () => {
 // Nobody is deleted by default: "Archive" keeps the record and marks when service ended.
 // ══════════════════════════════════════════════════════════
 const REC_CATS = [
-  ['all', '👥 Everyone'], ['elder', '👴 Elders'], ['pastor', '🙏 Pastors'],
-  ['shepherdess', '👩 Shepherdesses'], ['officer', '🏛️ Officers'], ['director', '🧭 Directors']
+  ['all', '👥 Everyone'], ['officer', '🏛️ Officers'], ['director', '🧭 Directors'], ['pastor', '🙏 Pastors'],
+  ['shepherdess', '👩 Shepherdesses'], ['elder', '👴 Elders'], ['deacon', '🕊️ Deacons'], ['worker', '🛠️ Workers']
 ];
-const REC_FORM = { elder: 'elders.html', pastor: 'biodata.html?type=pastor', shepherdess: 'biodata.html?type=shepherdess', officer: 'biodata.html?type=officer', director: 'biodata.html?type=director' };
-const REC_WORD = { elder: 'Elder', pastor: 'Pastor', shepherdess: 'Shepherdess', officer: 'Officer', director: 'Director' };
+const REC_FORM = { deacon: 'biodata.html?type=deacon', worker: 'biodata.html?type=worker', elder: 'elders.html', pastor: 'biodata.html?type=pastor', shepherdess: 'biodata.html?type=shepherdess', officer: 'biodata.html?type=officer', director: 'biodata.html?type=director' };
+const REC_WORD = { deacon: 'Deacon', worker: 'Worker', elder: 'Elder', pastor: 'Pastor', shepherdess: 'Shepherdess', officer: 'Officer', director: 'Director' };
 const REC_SECTIONS = [
-  ['Service', [['Position', 'position'], ['Serving since', 'stationSince'], ['Stopped serving', 'servedTo']]],
+  ['Service', [['Position', 'position'], ['Level', 'level'], ['Serving since', 'stationSince'], ['Stopped serving', 'servedTo']]],
   ['Personal', [['Gender', 'gender'], ['Date of birth', 'dateOfBirth'], ['Hometown', 'hometown'], ['Residence', 'residence']]],
   ['Church', [['District', 'district'], ['Church or station', 'church'], ['District Pastor', 'districtPastor']]],
   ['Contact', [['Phone', 'phone', 'tel'], ['WhatsApp', 'whatsapp', 'tel'], ['Email', 'email', 'mail']]],
@@ -2043,7 +2141,7 @@ function renderRecords() {
   if (!rows.length) { list.innerHTML = `<div class="empty"><div class="e-icon">📋</div><h3>Nobody found</h3><p>${rg.past ? 'No one is recorded as serving then.' : 'Share the form link so people can fill it.'}</p></div>`; return; }
   const groups = {};
   rows.forEach(r => { const k = _recCat === 'all' ? r.cat : elGroupKey(r); (groups[k] = groups[k] || []).push(r); });
-  const order = _recCat === 'all' ? ['pastor', 'shepherdess', 'officer', 'director', 'elder'] : DISTRICTS.map(d => d.id).concat(OTHER_KEY);
+  const order = _recCat === 'all' ? ['officer', 'director', 'pastor', 'shepherdess', 'elder', 'deacon', 'worker'] : DISTRICTS.map(d => d.id).concat(OTHER_KEY);
   list.innerHTML = order.filter(k => groups[k]).map(k => {
     const label = _recCat === 'all' ? REC_WORD[k] + 's' : (k === OTHER_KEY ? 'Other / Mission Office' : dName(k));
     return `<div class="el-group">${esc(label)} <span>${groups[k].length}</span></div>` +
@@ -2926,8 +3024,8 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
 (function () {
   const $ = id => document.getElementById(id);
   let me = null, back = 'dashboard', rows = [], unsub = null;
-  const KINDS = [['', 'Everyone'], ['elder', '👴 Elders'], ['pastor', '🙏 Pastors'], ['shepherdess', '👩 Shepherdesses'], ['officer', '🏛️ Officers'], ['director', '🧭 Directors']];
-  const WORD = { elder: 'Elder', pastor: 'Pastor', shepherdess: 'Shepherdess', officer: 'Officer', director: 'Director' };
+  const KINDS = [['', 'Everyone'], ['officer', '🏛️ Officers'], ['director', '🧭 Directors'], ['pastor', '🙏 Pastors'], ['shepherdess', '👩 Shepherdesses'], ['elder', '👴 Elders'], ['deacon', '🕊️ Deacons'], ['worker', '🛠️ Workers']];
+  const WORD = { elder: 'Elder', pastor: 'Pastor', shepherdess: 'Shepherdess', officer: 'Officer', director: 'Director', deacon: 'Deacon', worker: 'Worker' };
   const READERS = MISSION_ROLES.concat(DISTRICT_LEAD_ROLES, ['church_elder', 'elder']);
   window.canSeeDirectory = role => READERS.includes(role);
   const canFill = () => me && (['mission_admin', 'ministerial_secretary'].includes(me.role) || (me.role === 'system_engineer' && !me.restricted));
@@ -2993,6 +3091,210 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
   ['dir-search'].forEach(i => $(i).addEventListener('input', render));
   ['dir-kind', 'dir-district'].forEach(i => $(i).addEventListener('change', render));
   $('dir-fill').addEventListener('click', fill);
+})();
+
+// ══════════════════════════════════════════════════════════
+// EASY USE: phone Back key, show/hide password, remembered email, offline notice
+// ══════════════════════════════════════════════════════════
+(function () {
+  const $ = id => document.getElementById(id);
+
+  // ── Show / hide password ─────────────────────────────────
+  document.querySelectorAll('input[type=password]').forEach(inp => {
+    const wrap = document.createElement('div'); wrap.className = 'pw-wrap';
+    inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pw-eye'; b.textContent = '👁 Show';
+    b.setAttribute('aria-label', 'Show or hide the password');
+    b.addEventListener('click', () => {
+      const hidden = inp.type === 'password';
+      inp.type = hidden ? 'text' : 'password';
+      b.textContent = hidden ? '🙈 Hide' : '👁 Show';
+    });
+    wrap.appendChild(b);
+  });
+
+  // ── Remember the email on this phone (never the password) ─
+  try {
+    const saved = localStorage.getItem('vgmds_email');
+    if (saved && $('l-email') && !$('l-email').value) $('l-email').value = saved;
+  } catch (_) {}
+  $('btn-login').addEventListener('click', () => {
+    try { const v = $('l-email').value.trim(); if (v) localStorage.setItem('vgmds_email', v); } catch (_) {}
+  });
+
+  // ── Offline notice ───────────────────────────────────────
+  const off = () => $('offline-bar').classList.toggle('hidden', navigator.onLine);
+  window.addEventListener('online', off); window.addEventListener('offline', off); off();
+
+  // ── Phone Back key: go back one step inside the app; at the top, press twice to leave ──
+  const BACK = { armed: false, timer: null, guarded: false };
+  const activeScreen = () => SCREENS.find(s => !$('screen-' + s).classList.contains('hidden'));
+  const click = id => { const el = $(id); if (el) el.click(); return !!el; };
+
+  function appBack() {
+    // 1) an open pop-up closes first
+    const open = [...document.querySelectorAll('.modal-bg')].filter(m => !m.classList.contains('hidden')).pop();
+    if (open) {
+      const c = open.querySelector('[id$="-close"],[id$="-cancel"]');
+      if (c) c.click(); else open.classList.add('hidden');
+      return true;
+    }
+    const s = activeScreen();
+    if (s === 'forms') return click('forms-back');
+    if (s === 'dir') return click('dir-back');
+    if (s === 'help') return click('help-back');
+    if (s === 'ova') return click('ova-back');
+    if (s === 'admin') {
+      const visible = ['pending', 'all', 'depts', 'elders', 'records'].find(n => !$('panel-' + n).classList.contains('hidden'));
+      if (visible === 'elders' || visible === 'records') { adminTab('depts'); return true; }
+      if (visible === 'depts' || visible === 'all') { adminTab('pending'); return true; }
+      return false;
+    }
+    if (s === 'auth' && !$('fp-reg').classList.contains('hidden')) { click('tb-login'); return true; }
+    return false;
+  }
+
+  function onPop() {
+    if (appBack()) { history.pushState({ g: 1 }, ''); return; }
+    if (BACK.armed) { BACK.armed = false; clearTimeout(BACK.timer); history.back(); return; }  // leave the app
+    BACK.armed = true; clearTimeout(BACK.timer);
+    toast('Press Back again to leave', 'ok');
+    BACK.timer = setTimeout(() => { BACK.armed = false; }, 2200);
+    history.pushState({ g: 1 }, '');
+  }
+  // Phones only keep a history step that was added after a tap, so add it on the first tap
+  function arm() {
+    if (BACK.guarded) return;
+    BACK.guarded = true;
+    history.pushState({ g: 1 }, '');
+    window.addEventListener('popstate', onPop);
+  }
+  document.addEventListener('pointerdown', arm, { once: true, capture: true });
+  document.addEventListener('keydown', arm, { once: true, capture: true });
+})();
+
+// ══════════════════════════════════════════════════════════
+// MENU (☰), MY DETAILS, CHANGE PASSWORD, INSTALL, HELP, WORD SIZE
+// ══════════════════════════════════════════════════════════
+(function () {
+  const $ = id => document.getElementById(id);
+  const open = id => $(id).classList.remove('hidden');
+  const close = id => $(id).classList.add('hidden');
+  const user = () => (typeof _adminData !== 'undefined' && _adminData) || (typeof _dashData !== 'undefined' && _dashData) || {};
+  const here = () => SCREENS.find(s => !$('screen-' + s).classList.contains('hidden'));
+
+  // Install box that Chrome offers on its own
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; });
+  window.addEventListener('appinstalled', () => { deferred = null; toast('Installed ✓', 'ok'); });
+  const installed = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+  // Word size
+  function setZoom(z) {
+    document.body.style.zoom = z === 1 ? '' : String(z);
+    try { localStorage.setItem('vgmds_zoom', String(z)); } catch (_) {}
+    document.querySelectorAll('[data-zoom]').forEach(b => { b.style.background = (+b.dataset.zoom === z) ? 'var(--teal)' : '#fff'; b.style.color = (+b.dataset.zoom === z) ? '#fff' : 'var(--teal)'; });
+  }
+  let z0 = 1; try { z0 = parseFloat(localStorage.getItem('vgmds_zoom')) || 1; } catch (_) {}
+  setZoom(z0);
+  document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => setZoom(+b.dataset.zoom)));
+
+  // Open the menu
+  function openMenu() {
+    const u = user();
+    $('mn-name').textContent = u.displayName || 'Menu';
+    $('mn-sub').textContent = [typeof rName === 'function' ? rName(u.role) : '', typeof dName === 'function' && u.districtId ? dName(u.districtId) : ''].filter(Boolean).join(' · ');
+    $('mn-install').classList.toggle('hidden', installed());
+    setZoom(parseFloat(document.body.style.zoom) || 1);
+    open('mod-menu');
+  }
+  $('btn-menu-dash').addEventListener('click', openMenu);
+  $('btn-menu-admin').addEventListener('click', openMenu);
+  $('mod-menu-close').addEventListener('click', () => close('mod-menu'));
+  $('mod-menu').addEventListener('click', ev => { if (ev.target === $('mod-menu')) close('mod-menu'); });
+
+  $('mn-home').addEventListener('click', () => {
+    close('mod-menu');
+    const u = user();
+    const adminRole = u.role && (MISSION_ROLES.includes(u.role) || ['district_pastor', 'assoc_district_pastor'].includes(u.role));
+    show(adminRole ? 'admin' : 'dashboard');
+    if (adminRole) adminTab('pending');
+  });
+  $('mn-help').addEventListener('click', () => { close('mod-menu'); const h = here(); if (h && h !== 'help') helpFrom = h; openHelp(); });
+  $('mn-out').addEventListener('click', () => { close('mod-menu'); signOut(); });
+  $('mn-share').addEventListener('click', async () => {
+    close('mod-menu');
+    const url = new URL('./', location.href).href, text = 'Volta Ghana Mission Digital System. Open this link on your phone: ' + url;
+    if (navigator.share) { try { await navigator.share({ title: 'VGMDS', text, url }); } catch (_) {} }
+    else { try { await navigator.clipboard.writeText(url); toast('Link copied ✓', 'ok'); } catch (_) { window.prompt('Copy this link:', url); } }
+  });
+  $('mn-install').addEventListener('click', async () => {
+    close('mod-menu');
+    if (deferred) { deferred.prompt(); try { await deferred.userChoice; } catch (_) {} deferred = null; }
+    else open('mod-install');
+  });
+  $('mod-install-close').addEventListener('click', () => close('mod-install'));
+
+  // My details
+  $('mn-me').addEventListener('click', () => {
+    const u = user(); close('mod-menu');
+    $('me-name').value = u.displayName || ''; $('me-phone').value = u.phone || ''; $('me-err').textContent = '';
+    open('mod-me');
+  });
+  $('mod-me-cancel').addEventListener('click', () => close('mod-me'));
+  $('me-save').addEventListener('click', async () => {
+    const name = $('me-name').value.trim().replace(/\s+/g, ' '), phone = $('me-phone').value.trim();
+    if (name.length < 2) { $('me-err').textContent = 'Please write your name.'; return; }
+    try {
+      await db.collection('users').doc(auth.currentUser.uid).update({ displayName: name.slice(0, 80), phone: phone.slice(0, 20) });
+      const u = user(); u.displayName = name; u.phone = phone;
+      const g = $('d-greet'); if (g) g.textContent = 'Welcome, ' + name.split(' ')[0] + '!';
+      close('mod-me'); toast('Saved ✓', 'ok');
+    } catch (e) { $('me-err').textContent = 'Could not save. Try again.'; }
+  });
+
+  // Change password (the person must type the present password first)
+  $('mn-pw').addEventListener('click', () => {
+    close('mod-menu'); ['pw-old', 'pw-new', 'pw-new2'].forEach(i => { $(i).value = ''; $(i).type = 'password'; }); $('pw-err').textContent = ''; open('mod-pw');
+  });
+  $('mod-pw-cancel').addEventListener('click', () => close('mod-pw'));
+  $('pw-save').addEventListener('click', async () => {
+    const old = $('pw-old').value, nw = $('pw-new').value, nw2 = $('pw-new2').value, err = $('pw-err');
+    err.textContent = '';
+    if (!old) { err.textContent = 'Type your password now.'; return; }
+    if (nw.length < 6) { err.textContent = 'The new password needs at least 6 letters or numbers.'; return; }
+    if (nw !== nw2) { err.textContent = 'The two new passwords are not the same.'; return; }
+    if (nw === old) { err.textContent = 'Choose a password that is different from the old one.'; return; }
+    const u = auth.currentUser; loading(true);
+    try {
+      await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, old));
+      await u.updatePassword(nw);
+      loading(false); close('mod-pw'); toast('Password changed ✓', 'ok');
+    } catch (e) {
+      loading(false);
+      const M = { 'auth/wrong-password': 'Your password now is not right.', 'auth/invalid-credential': 'Your password now is not right.', 'auth/weak-password': 'Choose a stronger password.', 'auth/too-many-requests': 'Too many tries. Please wait a few minutes.', 'auth/requires-recent-login': 'Please sign out, sign in again, then try again.' };
+      err.textContent = M[e.code] || 'Could not change it. Try again.';
+    }
+  });
+
+  // Help with pictures
+  const HELP = [
+    ['🔑', 'Sign in', '<div class="hp-fig"><span class="hp-phone">✉️ your email</span><span class="hp-phone">🔒 ••••••</span><span class="hp-btn">Sign In</span></div><ol><li>Type your email and password.</li><li>Tap <b>👁 Show</b> to see what you typed.</li><li>Forgot it? Tap <b>Forgot password?</b> A link is sent to your email. Look in Spam too.</li></ol>'],
+    ['↩️', 'Going back', '<div class="hp-fig"><span class="hp-btn o">← Back</span><span class="hp-arrow">=</span><span class="hp-phone">◁ phone Back key</span></div><ol><li>Use the <b>←</b> at the top, or the phone’s Back key. Both go back one step.</li><li>At the first screen, press Back twice to leave. You stay signed in.</li></ol>'],
+    ['☰', 'The Menu', '<div class="hp-fig"><span class="hp-btn">☰ Menu</span><span class="hp-arrow">→</span><span class="hp-phone">🔑 👤 🔠 📲 ⎋</span></div><ol><li>Tap <b>☰ Menu</b> at the top right.</li><li>Change your password or your details, make the words bigger, put the app on your phone, or sign out.</li></ol>'],
+    ['📝', 'Make a form and share it', '<div class="hp-fig"><span class="hp-btn">➕ Make a new form</span><span class="hp-arrow">→</span><span class="hp-btn o">📤 Share</span></div><ol><li>Open <b>Forms</b>, tap <b>Make a new form</b> and choose a kind.</li><li>Change the questions, then tap <b>💾 Save</b>.</li><li>Tap <b>📤 Share</b> or <b>💬 WhatsApp</b>. People fill it on their phone, no sign-in needed.</li><li>Answers appear on the same page.</li></ol>'],
+    ['📒', 'Find a phone number', '<div class="hp-fig"><span class="hp-phone">🔍 name</span><span class="hp-btn">📞 0244…</span><span class="hp-btn o">💬 WhatsApp</span></div><ol><li>Open <b>📒 Directory</b>.</li><li>Type a name, church or district.</li><li>Tap the number to call, or <b>WhatsApp</b> to chat.</li></ol>'],
+    ['📅', 'Who was serving in a past year?', '<div class="hp-fig"><span class="hp-phone">📅 2005</span><span class="hp-arrow">→</span><span class="hp-phone">🙏 👴 🏛️ 🧭</span></div><ol><li>Ministerial Secretary → <b>Who served in…?</b></li><li>Type a year, such as 2005.</li><li>When someone stops serving, tap <b>📦 Archive</b> and write the date. They stay in the history.</li></ol>'],
+    ['📲', 'Put the app on your phone', '<div class="hp-fig"><span class="hp-phone">⋮</span><span class="hp-arrow">→</span><span class="hp-btn">Add to Home screen</span></div><ol><li>Open <b>☰ Menu</b> and tap <b>📲 Put the app on my phone</b>.</li><li>Or tap <b>⋮</b> in Chrome, then <b>Add to Home screen</b>.</li></ol>']
+  ];
+  function openHelp() {
+    $('help-body').innerHTML = HELP.map(([ic, t, body]) => `<div class="hp-card"><h3>${ic} ${t}</h3>${body}</div>`).join('');
+    show('help');
+  }
+  let helpFrom = 'dashboard';
+  $('help-back').addEventListener('click', () => show(helpFrom));
 })();
 </script>
 </body>

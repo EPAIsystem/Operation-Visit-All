@@ -72,6 +72,7 @@ button[disabled]{opacity:.6}
       <select id="district" name="district"></select><span class="e">Please choose the district.</span></div>
     <div class="f"><label id="churchLabel" for="church">Church</label><input id="church" name="church" maxlength="120"><span class="e">Please write the church.</span></div>
     <div class="f" id="dpBox"><label for="districtPastor">District Pastor</label><input id="districtPastor" name="districtPastor" maxlength="120"></div>
+    <div class="f hide" id="lvBox"><label class="req" for="level">Level of your work</label><select id="level" name="level"><option value="">Choose…</option><option>Church</option><option>District</option><option>Mission</option></select><span class="e">Please choose the level.</span></div>
     <div class="f"><label class="req" id="posLabel" for="position">Position</label><input id="position" name="position" maxlength="150"><span class="e">Please fill this in.</span></div>
     <div class="f"><label for="stationSince">Serving here since (year)</label><input id="stationSince" name="stationSince" maxlength="40" inputmode="numeric" placeholder="e.g. 2021"></div>
   </div>
@@ -148,7 +149,9 @@ const TYPES = {
   pastor:      { title: "Pastors Biodata Form",       who: "pastor",      pos: "Your role (e.g. District Pastor, Associate Pastor)", ord: true,  dp: false, church: "Church or station" },
   shepherdess: { title: "Shepherdesses Biodata Form", who: "shepherdess", pos: "Your role (e.g. District Shepherdess)",              ord: true,  dp: true,  church: "Church", sp: "Husband's name" },
   officer:     { title: "Mission Officers Biodata Form", who: "officer",  pos: "Your office (e.g. Treasurer, Executive Secretary)",  ord: false, dp: false, church: "Station or church" },
-  director:    { title: "Directors Biodata Form",     who: "director",    pos: "Department you direct (e.g. Youth, Health)",         ord: false, dp: false, church: "Station or church" }
+  director:    { title: "Directors Biodata Form",     who: "director",    pos: "Department you direct (e.g. Youth, Health)",         ord: false, dp: false, church: "Station or church" },
+  deacon:      { title: "Deacons and Deaconesses Biodata Form", who: "deacon", pos: "Your role (Deacon, Deaconess, Head Deacon…)",      ord: true,  dp: false, church: "Church" },
+  worker:      { title: "Church Workers Biodata Form", who: "worker",     pos: "Your portfolio (e.g. Treasurer, Sabbath School Superintendent). More than one? Write them all.", ord: false, dp: false, church: "Church or station", level: true }
 };
 const type = (new URLSearchParams(location.search).get("type") || "").toLowerCase();
 const T = TYPES[type];
@@ -161,12 +164,13 @@ if (!T) {
   document.title = T.title; $("#title").textContent = T.title;
   $("#posLabel").textContent = T.pos; $("#churchLabel").textContent = T.church;
   if (T.ord) $("#ordBox").classList.remove("hide");
+  if (T.level) $("#lvBox").classList.remove("hide");
   if (!T.dp) $("#dpBox").classList.add("hide");
   if (T.sp) $("#spLabel").textContent = T.sp;
 }
 $("#district").innerHTML = '<option value="">Choose…</option>' + DISTRICTS.map(d => '<option>' + d + '</option>').join("") + '<option>' + OFFICE + '</option>';
 
-const FIELDS = ["fullName","gender","dateOfBirth","church","district","districtPastor","hometown","residence","phone","whatsapp","email","maritalStatus","spouseName","spouseContact","childrenCount","position","stationSince","ordinationDate","ordinationPlace","ordainedBy","educationLevel","educationDetail","occupation","employer","nextOfKinName","nextOfKinRelationship","nextOfKinPhone","nextOfKinAddress","otherInfo"];
+const FIELDS = ["fullName","gender","dateOfBirth","church","district","districtPastor","hometown","residence","phone","whatsapp","email","maritalStatus","spouseName","spouseContact","childrenCount","position","level","stationSince","ordinationDate","ordinationPlace","ordainedBy","educationLevel","educationDetail","occupation","employer","nextOfKinName","nextOfKinRelationship","nextOfKinPhone","nextOfKinAddress","otherInfo"];
 const val = n => (form.elements[n].value || "").trim();
 const keyOf = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 function collect() {
@@ -177,6 +181,7 @@ function collect() {
   if (d.maritalStatus !== "Married") { d.spouseName = ""; d.spouseContact = ""; }
   if (!T.ord) { d.ordinationDate = d.ordinationPlace = d.ordainedBy = ""; }
   if (!T.dp) d.districtPastor = "";
+  if (!T.level) d.level = "";
   d.declaration = $("#declaration").checked;
   return d;
 }
@@ -230,6 +235,7 @@ function validate() {
   mark("fullName", val("fullName").length < 2);
   mark("district", !val("district"));
   mark("position", val("position").length < 2);
+  if (T.level) mark("level", !val("level"));
   mark("phone", !phoneOk(val("phone")));
   const em = val("email"); mark("email", em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
   if (!$("#declaration").checked) { $("#declErr").style.display = "block"; first = first || $("#declErr"); }
