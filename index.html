@@ -344,6 +344,15 @@ body {
 .dept-h { font-size: 15px; font-weight: 700; margin: 18px 4px 8px; color: var(--teal-dk); }
 .dept-card { background: #fff; border: 1.5px solid var(--border, #d6e4df); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
 .dept-card h4 { margin: 0 0 4px; font-size: 18px; }
+/* collapsible lists */
+.acc{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1.5px solid var(--border,#d6e4df);background:#fff;border-radius:14px;padding:13px 14px;font:600 17px system-ui,sans-serif;color:var(--ink,#13303f);margin:8px 0 0;min-height:52px;cursor:pointer}
+.acc .ar{flex:none;display:inline-block;transition:transform .15s;color:var(--teal)}
+.acc.open .ar{transform:rotate(90deg)}
+.acc small{margin-left:auto;color:var(--muted);font-weight:500;font-size:13px}
+.acc-level{background:var(--teal-lt);color:var(--teal-dk);border-color:var(--teal);font-size:18px}
+.acc-body{margin:6px 0 10px 6px;padding-left:10px;border-left:3px solid var(--teal-lt)}
+.acc-body.hidden{display:none}
+
 .dept-note { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
 .tile { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 68px; margin-top: 10px;
   padding: 12px 14px; border: 2px solid var(--teal); border-radius: 14px; background: var(--teal-lt);
@@ -1627,7 +1636,10 @@ function isDeptAdmin() { return _adminData && (_adminData.role === 'mission_admi
 function isElderManager() {
   return _adminData && (_adminData.role === 'mission_admin' || _adminData.role === 'exec_secretary' || _adminData.role === 'ministerial_secretary' || engineerOk());
 }
-function canSeeElders() { return isElderManager() || (_adminData && _adminData.role === 'exec_secretary') || (_adminData && _shareRoles.includes(_adminData.role)); }
+const isDistPastor = () => !!_adminData && ['district_pastor', 'assoc_district_pastor'].includes(_adminData.role);
+// the Ministerial Secretary's tools, for his own district only when the person is a District Pastor
+const isRecManager = () => isElderManager() || isDistPastor();
+function canSeeElders() { return isElderManager() || isDistPastor() || (_adminData && _adminData.role === 'exec_secretary') || (_adminData && _shareRoles.includes(_adminData.role)); }
 function seesAllDistricts() { return !(_adminData && DISTRICT_LEAD_ROLES.includes(_adminData.role)); }
 
 function watchShares() {
@@ -1689,10 +1701,16 @@ function startDepts() {
 }
 
 const SEED_DEPTS = [
-  { id: 'ministerial', name: 'Ministerial Secretary', order: 1 },
-  { id: 'evangelism', name: 'Evangelism', order: 2 },
-  { id: 'president_initiatives', name: "President's Special Initiatives", order: 3 },
+  { id: 'president', name: 'President', order: 1 },
+  { id: 'exec_secretary', name: 'Executive Secretary', order: 2 },
+  { id: 'treasury', name: 'Treasury', order: 3 },
+  { id: 'ministerial', name: 'Ministerial Secretary', order: 4 },
+  { id: 'evangelism', name: 'Evangelism', order: 5 },
+  { id: 'president_initiatives', name: "President's Special Initiatives", order: 6 },
 ];
+// The first four always come in this order; everything else follows
+const DEPT_FIRST = { president: 1, exec_secretary: 2, treasury: 3, ministerial: 4 };
+const deptRank = d => DEPT_FIRST[d.id] || 10 + (d.order || 99);
 function seedDepts() {
   SEED_DEPTS.forEach(s => {
     if (!_depts.some(d => d.id === s.id)) {
@@ -1710,7 +1728,13 @@ function seedDepts() {
   }
 }
 
-const DEPT_ICON = { evangelism: '📣', president_initiatives: '⭐' };
+const DEPT_ICON = { president: '🏛️', exec_secretary: '🗂️', treasury: '💰', evangelism: '📣', president_initiatives: '⭐' };
+
+// Which lists are open (kept on the phone)
+let _accOpen = new Set();
+try { _accOpen = new Set(JSON.parse(localStorage.getItem('vgmds_acc') || '[]')); } catch (_) {}
+const accOn = k => _accOpen.has(k);
+const accBtn = (k, label, count) => `<button type="button" class="acc ${k.startsWith('level:') ? 'acc-level ' : ''}${accOn(k) ? 'open' : ''}" data-acc="${esc(k)}" aria-expanded="${accOn(k)}"><span class="ar">▶</span><span>${label}</span>${count != null ? `<small>${count}</small>` : ''}</button>`;
 
 function renderDepts() {
   const box = document.getElementById('dept-list');
@@ -1719,12 +1743,13 @@ function renderDepts() {
     <button class="tile" data-forms=""><span class="ic">📝</span><span>My forms<small>Make a new form or see answers</small></span></button>
     <button class="tile" data-dir="1"><span class="ic">📒</span><span>Directory<small>Names and phone numbers of elders, pastors and officers</small></span></button></div>`;
   DEPT_LEVELS.forEach(([level, title]) => {
-    const rows = _depts.filter(d => d.level === level).sort((a, b) => (a.order || 99) - (b.order || 99) || String(a.name).localeCompare(String(b.name)));
-    html += `<div class="dept-h">${title}</div>`;
+    const rows = _depts.filter(d => d.level === level).sort((a, b) => deptRank(a) - deptRank(b) || String(a.name).localeCompare(String(b.name)));
+    const shown = rows.filter(d => d.id !== 'ministerial' || canSeeElders());
+    html += accBtn('level:' + level, title, shown.length) + `<div class="acc-body ${accOn('level:' + level) ? '' : 'hidden'}">`;
     rows.forEach(d => {
       if (d.id === 'ministerial') {
         if (!canSeeElders()) return;
-        html += `<div class="dept-card"><h4>📖 ${esc(d.name)}</h4>
+        html += accBtn('dept:' + d.id, '📖 ' + esc(d.name)) + `<div class="acc-body ${accOn('dept:' + d.id) ? '' : 'hidden'}"><div class="dept-card">
           <p class="dept-note">Forms and reports for ministers.</p>
           <button class="tile" data-rec="officer"><span class="ic">🏛️</span><span>Officers<small>Mission officers</small></span></button>
           <button class="tile" data-rec="director"><span class="ic">🧭</span><span>Directors<small>Department directors</small></span></button>
@@ -1736,10 +1761,10 @@ function renderDepts() {
           <button class="tile" data-act-members="1"><span class="ic">👥</span><span>Members<small>Church members</small></span></button>
           <button class="tile" data-rec="all"><span class="ic">📅</span><span>Who served in…?<small>Pick a year, see everyone then</small></span></button>
           <button class="tile" data-forms="${esc(d.id)}" data-fname="${esc(d.name)}"><span class="ic">📝</span><span>Forms<small>Make and share a form</small></span></button>
-        </div>`;
+        </div></div>`;
       } else {
         const acts = _acts.filter(a => a.deptId === d.id).sort((a, b) => (a.order || 99) - (b.order || 99) || String(a.name).localeCompare(String(b.name)));
-        html += `<div class="dept-card"><h4>${DEPT_ICON[d.id] || '📁'} ${esc(d.name)}</h4>`;
+        html += accBtn('dept:' + d.id, (DEPT_ICON[d.id] || '📁') + ' ' + esc(d.name), acts.length ? acts.length + (acts.length === 1 ? ' activity' : ' activities') : null) + `<div class="acc-body ${accOn('dept:' + d.id) ? '' : 'hidden'}"><div class="dept-card">`;
         if (MISSION_ROLES.includes(_adminData.role) || (_adminData.deptIds || []).includes(d.id)) html += `<button class="tile" data-forms="${esc(d.id)}" data-fname="${esc(d.name)}"><span class="ic">📝</span><span>Forms<small>Make and share a form</small></span></button>`;
         if (!acts.length) html += '<p class="dept-note">No activities yet.</p>';
         acts.forEach(a => {
@@ -1749,16 +1774,27 @@ function renderDepts() {
         if (isDeptAdmin()) html += `<button class="big-btn" data-leaders="${esc(d.id)}" data-lname="${esc(d.name)}">👥 Directors and coordinators</button>`;
         if (isDeptAdmin()) html += `<button class="big-btn" data-addact="${esc(d.id)}">➕ Add an activity</button>`;
         if (isDeptAdmin() && !d.builtin) html += `<button class="big-btn" data-del="${esc(d.id)}" style="min-height:44px;font-size:15px">🗑 Remove department</button>`;
-        html += '</div>';
+        html += '</div></div>';
       }
     });
-    if (!rows.some(d => d.id !== 'ministerial') && !rows.length) html += '<p class="dept-note">None yet.</p>';
+    if (!shown.length) html += '<p class="dept-note">None yet.</p>';
     if (isDeptAdmin()) html += `<button class="big-btn" data-add="${level}">➕ Add a department</button>`;
+    html += '</div>';
   });
   box.innerHTML = html;
 }
 
 document.getElementById('dept-list').addEventListener('click', async ev => {
+  // open / close a list
+  const ac = ev.target.closest('[data-acc]');
+  if (ac) {
+    const k = ac.dataset.acc, open = !_accOpen.has(k);
+    if (open) _accOpen.add(k); else _accOpen.delete(k);
+    ac.classList.toggle('open', open); ac.setAttribute('aria-expanded', open);
+    if (ac.nextElementSibling) ac.nextElementSibling.classList.toggle('hidden', !open);
+    try { localStorage.setItem('vgmds_acc', JSON.stringify([..._accOpen])); } catch (_) {}
+    return;
+  }
   const go = ev.target.closest('[data-go]');
   if (go && go.dataset.go === 'elders') { adminTab('elders'); return; }
   if (ev.target.closest('[data-dir]')) { openDirectory(_adminData, 'admin'); return; }
@@ -2149,7 +2185,7 @@ function startRecords() {
 function recLink(cat) { return new URL(REC_FORM[cat], location.href).href; }
 function paintRecLinks() {
   const box = document.getElementById('rc-links');
-  if (!isElderManager() || _recCat === 'all') { box.innerHTML = ''; return; }
+  if (!isRecManager() || _recCat === 'all') { box.innerHTML = ''; return; }
   const w = REC_WORD[_recCat].toLowerCase() + 's';
   box.innerHTML = `<p class="dept-note" style="margin-top:10px">Send this link to the ${w}. They fill it on their phone and it comes here.</p>
     <button class="big-btn fill" data-rl="share">📤 Share the form link</button>
@@ -2207,7 +2243,7 @@ function recAlso(r) {
 }
 function recFind(ref) { const [c, id] = ref.split('/'); return recAll().find(r => r._col === c && r.id === id); }
 function managerButtons(r, kind) {
-  if (!isElderManager()) return '';
+  if (!isRecManager()) return '';
   const col = kind === 'elders' ? 'elders_biodata' : (r._col || 'people_records');
   const a = `data-col="${col}" data-id="${esc(r.id)}"`;
   return (r.archived ? `<button class="btn btn-primary btn-sm" data-rest ${a}>↩ Bring back</button>` :
@@ -2236,7 +2272,7 @@ const closeRec = () => document.getElementById('mod-rec').classList.add('hidden'
 
 // Archive / bring back / remove (managers only; the security rules enforce this too)
 document.addEventListener('click', async ev => {
-  const b = ev.target.closest('[data-arch],[data-rest],[data-rm]'); if (!b || !isElderManager()) return;
+  const b = ev.target.closest('[data-arch],[data-rest],[data-rm]'); if (!b || !isRecManager()) return;
   const ref = db.collection(b.dataset.col).doc(b.dataset.id);
   try {
     if (b.hasAttribute('data-arch')) {
