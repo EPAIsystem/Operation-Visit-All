@@ -1115,8 +1115,13 @@ function onUser(user) {
 
       } else if (data.status === 'approved') {
         const isAdmin = ['mission_admin','system_engineer','exec_secretary','ministerial_secretary','district_pastor','assoc_district_pastor'].includes(data.role);
-        if (isAdmin) { renderAdmin(data); show('admin'); }
-        else         { renderDashboard(data); show('dashboard'); }
+        // Do not pull the person back to the first screen when their details refresh in the background
+        const here = SCREENS.find(x => !document.getElementById('screen-' + x).classList.contains('hidden'));
+        const home = isAdmin ? 'admin' : 'dashboard';
+        const stay = here && !['auth', 'pending', 'rejected'].includes(here) && (!['admin', 'dashboard'].includes(here) || here === home);
+        if (isAdmin) { renderAdmin(data); if (!stay) show('admin'); }
+        else         { renderDashboard(data); if (!stay) show('dashboard'); }
+        try { resumeRoute(data, isAdmin); } catch (e) { console.warn('resume:', e); }
 
       } else {
         renderPending(data); show('pending');
@@ -1141,7 +1146,7 @@ if (FB_READY) {
 // ══════════════════════════════════════════════════════════
 function signOut() {
   if (!window.confirm('Sign out? You will need your password to sign in again.')) return;
-  clearSubs(); auth.signOut();
+  clearSubs(); try { localStorage.removeItem('vgmds_route'); } catch (_) {} auth.signOut();
 }
 
 document.getElementById('btn-so-pending') .addEventListener('click', signOut);
@@ -1447,7 +1452,7 @@ const CHURCH_ROLES = ['church_elder','elder','church_leader','action_unit_leader
 
 function inviteBox() {
   const box = document.createElement('div');
-  if (!['mission_admin','system_engineer','district_pastor','assoc_district_pastor'].includes(_adminData?.role)) return box;
+  if (!['mission_admin','system_engineer','exec_secretary','district_pastor','assoc_district_pastor'].includes(_adminData?.role)) return box;
   const isPastorOnly = !MISSION_ROLES.includes(_adminData?.role);
   const roles = isPastorOnly ? CHURCH_ROLES : Object.keys(ROLE_LABELS);
   box.innerHTML = `<button class="big-btn fill" id="inv-open">➕ Invite someone</button>
@@ -1589,9 +1594,9 @@ let _shareUnsub = null, _deptUnsub = null, _actUnsub = null;
 let _acts = [];
 
 function engineerOk() { return _adminData && _adminData.role === 'system_engineer' && !_adminData.restricted; }
-function isDeptAdmin() { return _adminData && (_adminData.role === 'mission_admin' || engineerOk()); }
+function isDeptAdmin() { return _adminData && (_adminData.role === 'mission_admin' || _adminData.role === 'exec_secretary' || engineerOk()); }
 function isElderManager() {
-  return _adminData && (_adminData.role === 'mission_admin' || _adminData.role === 'ministerial_secretary' || engineerOk());
+  return _adminData && (_adminData.role === 'mission_admin' || _adminData.role === 'exec_secretary' || _adminData.role === 'ministerial_secretary' || engineerOk());
 }
 function canSeeElders() { return isElderManager() || (_adminData && _adminData.role === 'exec_secretary') || (_adminData && _shareRoles.includes(_adminData.role)); }
 function seesAllDistricts() { return !(_adminData && DISTRICT_LEAD_ROLES.includes(_adminData.role)); }
@@ -2640,6 +2645,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
 
   // ── actions ──────────────────────────────────────────────
   function go(v, a) { view = v; arg = a === undefined ? null : a; filters.shown = 60; render(); $('ova-body').scrollTop = 0; }
+  window._ova = { state: () => ({ view, arg }), go };
   const yes = v => v === 'yes';
 
   async function saveMember(f) {
@@ -2794,6 +2800,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
 
   window.openForms = function (user, c, from) {
     me = user; ctx = c || {}; back = from || 'dashboard'; view = 'list'; cur = null; draft = null;
+    window._formsCtx = ctx;
     stop(); loadList(); show('forms'); render();
   };
 
@@ -2887,7 +2894,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
 
   function parse(r) { try { return JSON.parse(r.answersJson) || {}; } catch (_) { return {}; } }
   const fmtAns = a => Array.isArray(a) ? a.join(', ') : (a == null ? '' : String(a));
-  const canManage = f => me && (f.ownerId === me.uid || isMissionRole() && me.role !== 'ministerial_secretary' && me.role !== 'exec_secretary' || (isPastorRole() && f.districtId === me.districtId));
+  const canManage = f => me && (f.ownerId === me.uid || isMissionRole() && me.role !== 'ministerial_secretary' || (isPastorRole() && f.districtId === me.districtId));
 
   function renderResults(body) {
     const f = cur; if (!f) { view = 'list'; return render(); }
@@ -3042,7 +3049,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
   const WORD = { elder: 'Elder', pastor: 'Pastor', shepherdess: 'Shepherdess', officer: 'Officer', director: 'Director', deacon: 'Deacon', worker: 'Worker' };
   const READERS = MISSION_ROLES.concat(DISTRICT_LEAD_ROLES, ['church_elder', 'elder']);
   window.canSeeDirectory = role => READERS.includes(role);
-  const canFill = () => me && (['mission_admin', 'ministerial_secretary'].includes(me.role) || (me.role === 'system_engineer' && !me.restricted));
+  const canFill = () => me && (['mission_admin', 'exec_secretary', 'ministerial_secretary'].includes(me.role) || (me.role === 'system_engineer' && !me.restricted));
 
   window.openDirectory = function (user, from) {
     me = user; back = from || 'dashboard';
@@ -3318,6 +3325,55 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
   let helpFrom = 'dashboard';
   $('help-back').addEventListener('click', () => show(helpFrom));
 })();
+
+// ══════════════════════════════════════════════════════════
+// REFRESH KEEPS YOU WHERE YOU WERE
+// The screen is remembered when the page is refreshed or closed, and opened again after sign-in is restored.
+// ══════════════════════════════════════════════════════════
+const ROUTE_KEY = 'vgmds_route', ROUTE_HOURS = 2;
+let _resumed = false;
+function currentRoute() {
+  const s = SCREENS.find(x => !document.getElementById('screen-' + x).classList.contains('hidden'));
+  if (!s || ['auth', 'pending', 'rejected'].includes(s)) return null;
+  const u = _adminData || _dashData || {};
+  if (!u.uid) return null;
+  const r = { screen: s, uid: u.uid, t: Date.now() };
+  if (s === 'admin') {
+    r.panel = ['pending', 'all', 'depts', 'elders', 'records'].find(n => !document.getElementById('panel-' + n).classList.contains('hidden')) || 'pending';
+    r.rec = _recCat;
+  }
+  if (s === 'ova' && window._ova) {
+    const o = window._ova.state(); const plain = o.arg == null || ['string', 'number'].includes(typeof o.arg);
+    const up = { newreport: 'reports', newmember: 'members', newteam: 'teams', newann: 'anns' };
+    r.ova = { view: up[o.view] || o.view, arg: plain ? o.arg : null };
+  }
+  if (s === 'forms') r.ctx = window._formsCtx || {};
+  return r;
+}
+function saveRoute() { try { const r = currentRoute(); if (r) localStorage.setItem(ROUTE_KEY, JSON.stringify(r)); } catch (_) {} }
+window.addEventListener('pagehide', saveRoute);
+window.addEventListener('beforeunload', saveRoute);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveRoute(); });
+
+function resumeRoute(data, isAdmin) {
+  if (_resumed) return; _resumed = true;
+  let r = null; try { r = JSON.parse(localStorage.getItem(ROUTE_KEY) || 'null'); } catch (_) {}
+  if (!r || r.uid !== data.uid || Date.now() - r.t > ROUTE_HOURS * 3600000) return;
+  const from = isAdmin ? 'admin' : 'dashboard', usr = isAdmin ? _adminData : _dashData;
+  if (r.screen === 'admin' && isAdmin) {
+    if (r.panel === 'records') { _recCat = r.rec || 'all'; const sel = document.getElementById('rc-cat'); if (sel) sel.value = _recCat; }
+    if (['pending', 'all', 'depts', 'elders', 'records'].includes(r.panel)) adminTab(r.panel);
+  } else if (r.screen === 'ova') {
+    openOva(usr, from);
+    if (r.ova && r.ova.view && r.ova.view !== 'home' && window._ova) window._ova.go(r.ova.view, r.ova.arg);
+  } else if (r.screen === 'forms') {
+    openForms(usr, r.ctx || {}, from);
+  } else if (r.screen === 'dir') {
+    openDirectory(usr, from);
+  } else if (r.screen === 'help') {
+    const b = document.getElementById('mn-help'); if (b) b.click();
+  }
+}
 </script>
 </body>
 </html>
