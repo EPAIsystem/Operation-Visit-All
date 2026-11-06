@@ -18,6 +18,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="offline.js"></script>
 
 <style>
 /* ── TOKENS ───────────────────────────────────────────── */
@@ -499,7 +500,7 @@ body {
 </style>
 </head>
 <body>
-<div id="offline-bar" class="hidden">📴 No internet. Your changes will wait until you are online.</div>
+<div id="offline-bar" class="hidden">📴 No internet. You can keep working. What you save stays on this phone and is sent when internet returns.</div>
 
 <!-- ── LOADING OVERLAY ─────────────────────────────── -->
 <div id="loader"><div class="spinner"></div></div>
@@ -531,8 +532,8 @@ body {
       </div>
       <p class="err" id="l-err"></p>
       <p class="ok-note" id="l-ok"></p>
-      <button class="btn btn-primary" id="btn-login">Sign In</button>
-      <button type="button" class="link-btn" id="btn-forgot">Forgot password?</button>
+      <button class="btn btn-primary" id="btn-login" data-net>Sign In</button>
+      <button type="button" class="link-btn" id="btn-forgot" data-net>Forgot password?</button>
     </div>
 
     <!-- REGISTER -->
@@ -593,7 +594,7 @@ body {
         </div>
       </div>
       <p class="err" id="r-err"></p>
-      <button class="btn btn-primary" id="btn-reg">Create Account</button>
+      <button class="btn btn-primary" id="btn-reg" data-net>Create Account</button>
     </div>
   </div>
 </div>
@@ -608,8 +609,8 @@ body {
     <p class="info-note" id="pending-who">Your account is awaiting approval from your District Pastor.<br>You will be redirected automatically once approved.</p>
     <div class="info-card" id="pending-info"></div>
     <p class="info-note" id="verify-note">Already used the old VGM app? We sent a link to your email. Open it, then tap the button below and you will be let in with your old role.</p>
-    <button class="btn" id="btn-verified">I have verified my email</button>
-    <button class="btn btn-outline" id="btn-resend" style="margin-top:8px">Send the link again</button>
+    <button class="btn" id="btn-verified" data-net>I have verified my email</button>
+    <button class="btn btn-outline" id="btn-resend" data-net style="margin-top:8px">Send the link again</button>
     <div class="info-note" id="verify-msg"></div>
     <p class="info-note">Not approved after 24 hours? Contact your approver directly.</p>
     <button class="btn btn-outline" id="btn-so-pending">Sign Out</button>
@@ -667,7 +668,7 @@ body {
     <button class="tile" id="mn-home"><span class="ic">🏠</span><span>Home<small>Go to the first screen</small></span></button>
     <button class="tile" id="mn-help"><span class="ic">❓</span><span>Help<small>Pictures that show how to use the app</small></span></button>
     <button class="tile" id="mn-me"><span class="ic">👤</span><span>My details<small>Change my name or phone</small></span></button>
-    <button class="tile" id="mn-pw"><span class="ic">🔑</span><span>Change password<small>Choose a new password</small></span></button>
+    <button class="tile" id="mn-pw" data-net><span class="ic">🔑</span><span>Change password<small>Choose a new password</small></span></button>
     <div class="tile" style="display:block;min-height:0;cursor:default">
       <div style="font-weight:600;margin-bottom:8px">🔠 Size of words</div>
       <div class="fm-add"><button type="button" data-zoom="1">Normal</button><button type="button" data-zoom="1.15">Big</button><button type="button" data-zoom="1.3">Very big</button></div>
@@ -703,7 +704,7 @@ body {
     <p class="err" id="pw-err"></p>
     <div class="modal-actions">
       <button class="btn btn-outline btn-sm" id="mod-pw-cancel">Cancel</button>
-      <button class="btn btn-primary btn-sm" id="pw-save">Save</button>
+      <button class="btn btn-primary btn-sm" id="pw-save" data-net>Save</button>
     </div>
   </div>
 </div>
@@ -932,6 +933,8 @@ if (FB_READY) {
   firebase.initializeApp(FB_CONFIG);
   auth = firebase.auth();
   db   = firebase.firestore();
+  // Work without internet: keep data on the phone, hold changes until internet returns
+  try { vgmEnablePersistence(db); vgmQueueWrites(); } catch (_) {}
 }
 
 // ── VGM DISTRICTS ──────────────────────────────────────────
@@ -1208,6 +1211,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
       'auth/invalid-email':     'Invalid email address.',
       'auth/too-many-requests': 'Too many attempts — please wait.',
       'auth/invalid-credential':'Email or password is incorrect.',
+      'auth/network-request-failed':'No internet. Signing in needs internet.',
     };
     errEl.textContent = MSGS[e.code] || 'Sign-in failed. Try again.';
   }
@@ -2146,12 +2150,22 @@ function renderRecords() {
     const label = _recCat === 'all' ? REC_WORD[k] + 's' : (k === OTHER_KEY ? 'Other / Mission Office' : dName(k));
     return `<div class="el-group">${esc(label)} <span>${groups[k].length}</span></div>` +
       groups[k].sort((a, b) => elVal(a, 'fullName').localeCompare(elVal(b, 'fullName'))).map(r => {
-        const sub = [elVal(r, 'position') || REC_WORD[r.cat], elVal(r, 'church'), r.cat !== 'elder' || _recCat !== 'all' ? '' : '', elVal(r, 'phone')].filter(Boolean).join(' · ');
+        const sub = [posShow(elVal(r, 'position')) || REC_WORD[r.cat], elVal(r, 'church'), elVal(r, 'phone'), recAlso(r)].filter(Boolean).join(' · ');
         return `<div class="el-row" role="button" tabindex="0" data-rid="${esc(r._col)}/${esc(r.id)}"><div class="n">${esc(elVal(r, 'fullName') || '—')}${r.archived ? ' <small>(archived)</small>' : ''}</div><div class="s">${esc(sub)}</div></div>`;
       }).join('');
   }).join('');
 }
 
+// A person with several portfolios is stored once, portfolios separated by " | "
+const posList = v => String(v || '').split('|').map(x => x.trim()).filter(Boolean);
+const posShow = v => posList(v).join(', ');
+// Other groups the same person (same phone) also serves in
+function recAlso(r) {
+  const k = String(r.phoneKey || '').trim(); if (!k) return '';
+  const w = new Set();
+  recAll().forEach(o => { if (o !== r && !o.archived && String(o.phoneKey || '') === k && o.cat !== r.cat) w.add(REC_WORD[o.cat]); });
+  return w.size ? 'Also: ' + [...w].join(', ') : '';
+}
 function recFind(ref) { const [c, id] = ref.split('/'); return recAll().find(r => r._col === c && r.id === id); }
 function managerButtons(r, kind) {
   if (!isElderManager()) return '';
@@ -2164,11 +2178,11 @@ function managerButtons(r, kind) {
 function openRec(ref) {
   const r = recFind(ref); if (!r) return;
   document.getElementById('mod-r-name').textContent = elVal(r, 'fullName') || REC_WORD[r.cat];
-  document.getElementById('mod-r-sub').textContent = [REC_WORD[r.cat], elVal(r, 'position'), elVal(r, 'district')].filter(Boolean).join(' · ');
+  document.getElementById('mod-r-sub').textContent = [REC_WORD[r.cat], posShow(elVal(r, 'position')), elVal(r, 'district'), recAlso(r)].filter(Boolean).join(' · ');
   let html = '';
   REC_SECTIONS.forEach(([title, fields]) => {
     const rows = fields.map(([label, f, kind]) => {
-      const v = f === 'submittedAt' ? fmtDate(r.submittedAt) : elVal(r, f);
+      const v = f === 'submittedAt' ? fmtDate(r.submittedAt) : f === 'position' ? posShow(elVal(r, 'position')) : elVal(r, f);
       if (!v || v === '—') return '';
       const shown = kind === 'tel' ? `<a href="tel:${esc(v.replace(/[^\d+]/g, ''))}">${esc(v)}</a>` : kind === 'mail' ? `<a href="mailto:${esc(v)}">${esc(v)}</a>` : esc(v);
       return `<div class="dl-row"><span class="k">${esc(label)}</span><span class="v">${shown}</span></div>`;
@@ -3063,7 +3077,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
     $('dir-list').innerHTML = list.slice(0, 300).map(r => {
       const tel = String(r.phone || '').replace(/[^\d+]/g, '');
       const wa = tel.replace(/^\+/, '').replace(/^0/, '233');
-      const sub = [WORD[r.kind], r.position, r.church, r.district].filter(Boolean).join(' · ');
+      const sub = [WORD[r.kind], String(r.position||'').split('|').map(x=>x.trim()).filter(Boolean).join(', '), r.church, r.district].filter(Boolean).join(' · ');
       return `<div class="dir-card"><div class="n">${esc(r.fullName)}</div><div class="s">${esc(sub)}</div>
         <div class="dir-btns"><a class="btn btn-primary btn-sm" href="tel:${esc(tel)}">📞 ${esc(r.phone)}</a>
         <a class="btn btn-outline btn-sm" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">💬 WhatsApp</a></div></div>`;
@@ -3126,6 +3140,14 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
   // ── Offline notice ───────────────────────────────────────
   const off = () => $('offline-bar').classList.toggle('hidden', navigator.onLine);
   window.addEventListener('online', off); window.addEventListener('offline', off); off();
+  // Saved on the phone while offline; tell the person when it has gone through
+  let _queued = false;
+  window.addEventListener('vgm-queued', () => { if (!_queued) toast('Saved on this phone. It will be sent when internet returns.', 'ok'); _queued = true; });
+  window.addEventListener('vgm-write-failed', ev => toast('One saved change was not accepted by the server' + (ev.detail && ev.detail.code ? ' (' + ev.detail.code + ')' : '') + '.', 'err'));
+  window.addEventListener('online', () => {
+    if (!_queued || !db) return;
+    db.waitForPendingWrites().then(() => { _queued = false; toast('All your saved changes have been sent ✓', 'ok'); }).catch(() => {});
+  });
 
   // ── Phone Back key: go back one step inside the app; at the top, press twice to leave ──
   const BACK = { armed: false, timer: null, guarded: false };
@@ -3274,7 +3296,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
       loading(false); close('mod-pw'); toast('Password changed ✓', 'ok');
     } catch (e) {
       loading(false);
-      const M = { 'auth/wrong-password': 'Your password now is not right.', 'auth/invalid-credential': 'Your password now is not right.', 'auth/weak-password': 'Choose a stronger password.', 'auth/too-many-requests': 'Too many tries. Please wait a few minutes.', 'auth/requires-recent-login': 'Please sign out, sign in again, then try again.' };
+      const M = { 'auth/wrong-password': 'Your password now is not right.', 'auth/invalid-credential': 'Your password now is not right.', 'auth/weak-password': 'Choose a stronger password.', 'auth/too-many-requests': 'Too many tries. Please wait a few minutes.', 'auth/requires-recent-login': 'Please sign out, sign in again, then try again.', 'auth/network-request-failed': 'No internet. Changing the password needs internet.' };
       err.textContent = M[e.code] || 'Could not change it. Try again.';
     }
   });

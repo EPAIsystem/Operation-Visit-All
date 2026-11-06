@@ -144,6 +144,7 @@ button[disabled]{opacity:.6}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="offline.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const COLLECTION = "people_records";
@@ -259,7 +260,7 @@ function showRecent() {
 
 let db = null;
 const CFG = window.VGM_FIREBASE_CONFIG || {};
-if (CFG.apiKey && window.firebase) { try { firebase.initializeApp(CFG); db = firebase.firestore(); } catch (e) {} }
+if (CFG.apiKey && window.firebase) { try { firebase.initializeApp(CFG); db = firebase.firestore(); vgmEnablePersistence(db); } catch (e) {} }
 
 const phoneOk = v => { const n = v.replace(/\D/g, ""); return n.length >= 9 && n.length <= 15 && /^[\d+\s()-]+$/.test(v); };
 function validate() {
@@ -291,7 +292,7 @@ form.addEventListener("submit", async ev => {
   if (!db) { showMsg("Sending is not switched on yet. Please tell the person who sent you this link."); return; }
   const btn = $("#btnSubmit"); btn.disabled = true; btn.textContent = "Sending…";
   const data = collect();
-  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000));
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), navigator.onLine ? 20000 : 1500));
   if (editing) {
     data.editProof = editing.key; data.editedAt = firebase.firestore.FieldValue.serverTimestamp();
     try {
@@ -300,6 +301,12 @@ form.addEventListener("submit", async ev => {
       try { localStorage.removeItem(DRAFT); } catch (e) {}
       finish("Changes saved", "Your changes have been saved.", null);
     } catch (err) {
+      if (err && err.message === "timeout") {
+        const subs = loadSubs().map(s => s.id === editing.id ? Object.assign({}, s, { data: collect(), name: data.fullName }) : s); saveSubs(subs);
+        try { localStorage.removeItem(DRAFT); } catch (e) {}
+        finish("Changes kept on this phone", "There is no internet right now (or it is very slow). Your form is kept on this phone and will be sent by itself when internet returns. Please open this same page again once you have internet, so it can go through.", null);
+        return;
+      }
       btn.disabled = false; btn.textContent = "Save changes";
       showMsg(err && err.code === "permission-denied" ? "The 48 hours for changing this form are over. Please tell the Ministerial Secretary's office if something must be corrected." : "Could not save. Check your internet and try again.");
     }
@@ -318,6 +325,14 @@ form.addEventListener("submit", async ev => {
     showAlso();
     finish("Received. Thank you.", null, data.refNo);
   } catch (err) {
+    if (err && err.message === "timeout") { // kept on the phone; Firestore sends it when internet returns
+      try { localStorage.removeItem(DRAFT); } catch (e) {}
+      const subs = loadSubs(); subs.push({ id, type, key: data.editKey, at: Date.now(), name: data.fullName, data: collect() }); saveSubs(subs);
+      try { localStorage.setItem("vgm-bio-shared", JSON.stringify(data)); } catch (e) {}
+      showAlso();
+      finish("Saved on this phone", "There is no internet right now (or it is very slow). Your form is kept on this phone and will be sent by itself when internet returns. Please open this same page again once you have internet, so it can go through.", data.refNo);
+      return;
+    }
     btn.disabled = false; btn.textContent = "Send";
     if (err && err.code === "permission-denied") { console.error(err); showMsg("This form could not be accepted. If you have already sent it, thank you, you do not need to send it again. If you have not, please tell the person who sent you this link. (Code: " + err.code + ")"); return; }
     showMsg("The form could not be sent. Check your internet and tap Send again. Your answers are still here.");

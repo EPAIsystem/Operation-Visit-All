@@ -317,6 +317,7 @@ input::placeholder,textarea::placeholder{color:#8a9a91;opacity:.8}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="offline.js"></script>
 <script>
 /* ================== SETTINGS ================== */
 // 1) Firebase config is read from firebase-config.js (shared with the Operation Visit All app).
@@ -432,7 +433,7 @@ function showRecent(){
   }));
 }
 let db = null;
-if(FIREBASE_CONFIG.apiKey && window.firebase){ try{ firebase.initializeApp(FIREBASE_CONFIG); db = firebase.firestore(); }catch(e){ db = null; } }
+if(FIREBASE_CONFIG.apiKey && window.firebase){ try{ firebase.initializeApp(FIREBASE_CONFIG); db = firebase.firestore(); vgmEnablePersistence(db); }catch(e){ db = null; } }
 
 form.addEventListener("submit", async ev => {
   ev.preventDefault();
@@ -445,13 +446,21 @@ form.addEventListener("submit", async ev => {
   if(editing){
     data.editProof = editing.key; data.editedAt = firebase.firestore.FieldValue.serverTimestamp();
     try{
-      await Promise.race([ (() => { const b = db.batch(); b.update(db.collection(COLLECTION).doc(editing.id), data); b.set(db.collection("directory").doc(editing.id), dirEntry(data, editing.id.slice(3))); return b.commit(); })(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000)) ]);
+      await Promise.race([ (() => { const b = db.batch(); b.update(db.collection(COLLECTION).doc(editing.id), data); b.set(db.collection("directory").doc(editing.id), dirEntry(data, editing.id.slice(3))); return b.commit(); })(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), navigator.onLine ? 20000 : 1500)) ]);
       const subs = loadSubs().map(s => s.id === editing.id ? Object.assign({}, s, { data: collect(), name: data.fullName }) : s); saveSubs(subs);
       clearDraft();
       $("#doneTitle").textContent = "Changes saved"; $("#doneText").textContent = "Your changes have been saved in the Volta Ghana Mission elders register.";
       form.style.display = "none"; $(".tools").style.display = "none"; $(".bar").style.display = "none"; $("#recent").innerHTML = "";
       $("#done").classList.add("on"); window.scrollTo({top:0, behavior:"smooth"});
     }catch(err){
+      if(err && err.message === "timeout"){
+        const subs = loadSubs().map(s => s.id === editing.id ? Object.assign({}, s, { data: collect(), name: data.fullName }) : s); saveSubs(subs);
+        clearDraft();
+        $("#doneTitle").textContent = "Changes kept on this phone"; $("#doneText").textContent = "There is no internet right now (or it is very slow). Your form is kept on this phone and will be sent by itself when internet returns. Please open this same page again once you have internet, so it can go through.";
+        form.style.display = "none"; $(".tools").style.display = "none"; $(".bar").style.display = "none"; $("#recent").innerHTML = "";
+        $("#done").classList.add("on"); window.scrollTo({top:0, behavior:"smooth"});
+        return;
+      }
       btn.disabled = false; btn.textContent = "Save changes";
       showMsg(err && err.code === "permission-denied"
         ? "The 48 hours for changing this form are over. Please tell your District Pastor if something must be corrected."
@@ -468,7 +477,7 @@ form.addEventListener("submit", async ev => {
   try{
     await Promise.race([
       (() => { const b = db.batch(); b.set(db.collection(COLLECTION).doc("ph_" + data.phoneKey), data); b.set(db.collection("directory").doc("ph_" + data.phoneKey), dirEntry(data, data.phoneKey)); return b.commit(); })(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000))
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), navigator.onLine ? 20000 : 1500))
     ]);
     clearDraft();
     { const subs = loadSubs(); subs.push({ id: "ph_" + data.phoneKey, key: data.editKey, at: Date.now(), name: data.fullName, data: collect() }); saveSubs(subs); }
@@ -476,6 +485,15 @@ form.addEventListener("submit", async ev => {
     form.style.display = "none"; $(".tools").style.display = "none"; $(".bar").style.display = "none";
     $("#done").classList.add("on"); window.scrollTo({top:0, behavior:"smooth"});
   }catch(err){
+    if(err && err.message === "timeout"){ // kept on the phone; sent by itself when internet returns
+      clearDraft();
+      { const subs = loadSubs(); subs.push({ id: "ph_" + data.phoneKey, key: data.editKey, at: Date.now(), name: data.fullName, data: collect() }); saveSubs(subs); }
+      $("#doneTitle").textContent = "Saved on this phone"; $("#doneText").textContent = "There is no internet right now (or it is very slow). Your form is kept on this phone and will be sent by itself when internet returns. Please open this same page again once you have internet, so it can go through.";
+      $("#refNo").textContent = data.refNo;
+      form.style.display = "none"; $(".tools").style.display = "none"; $(".bar").style.display = "none";
+      $("#done").classList.add("on"); window.scrollTo({top:0, behavior:"smooth"});
+      return;
+    }
     btn.disabled = false; btn.textContent = "Submit form";
     if(err && err.code === "permission-denied"){
       console.error(err); showMsg("This form could not be accepted. If you have already sent it, thank you, you do not need to send it again. If you have not, please tell the person who sent you this link. (Code: " + err.code + ")");

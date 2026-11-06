@@ -51,13 +51,14 @@ button[disabled]{opacity:.6}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="offline.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const id = (new URLSearchParams(location.search).get("f") || "").replace(/[^A-Za-z0-9_-]/g, "");
 const CFG = window.VGM_FIREBASE_CONFIG || {};
 let db = null, form = null;
-if (CFG.apiKey && window.firebase) { try { firebase.initializeApp(CFG); db = firebase.firestore(); } catch (e) {} }
+if (CFG.apiKey && window.firebase) { try { firebase.initializeApp(CFG); db = firebase.firestore(); vgmEnablePersistence(db); } catch (e) {} }
 const state = t => { $("#state").classList.remove("hide"); $("#state").textContent = t; };
 
 async function load() {
@@ -115,10 +116,14 @@ $("#f").addEventListener("submit", async ev => {
   try {
     await Promise.race([
       db.collection("forms").doc(id).collection("responses").doc(rid).set({ answersJson: json, phoneKey, submittedAt: firebase.firestore.FieldValue.serverTimestamp(), source: "web-form" }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000))
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), navigator.onLine ? 20000 : 1500))
     ]);
     $("#f").classList.add("hide"); state("✅ Received. Thank you."); window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (err) {
+    if (err && err.message === "timeout") { // kept on the phone; sent by itself when internet returns
+      $("#f").classList.add("hide"); state("📴 Saved on this phone. It will be sent by itself when internet returns. Please open this same page again once you have internet."); window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     btn.disabled = false; btn.textContent = "Send";
     console.error(err);
     if (err && err.code === "permission-denied") showMsg(form.onePerPhone ? "This form could not be accepted. If you have already sent it, you do not need to send it again. (Code: " + err.code + ")" : "This form is closed or could not be sent. (Code: " + err.code + ")");
