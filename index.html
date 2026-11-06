@@ -654,10 +654,23 @@ body {
     </div>
     <button class="tile hidden" id="btn-open-dir"><span class="ic">📒</span><span>Directory<small>Names and phone numbers</small></span></button>
     <button class="tile" id="btn-open-forms"><span class="ic">📝</span><span>Forms<small>Make a form and collect answers</small></span></button>
+    <div id="d-deptforms"></div>
     <button class="tile" id="btn-open-ova"><span class="ic">🚶</span><span>Operation Visit All<small>Visit reports, members, teams</small></span></button>
   </div>
 </div>
 
+
+<!-- DEPARTMENT LEADERS -->
+<div id="mod-leaders" class="modal-bg hidden">
+  <div class="modal tall">
+    <div class="modal-handle"></div>
+    <h3 id="ld-title">Leaders of this department</h3>
+    <p class="dept-note">Directors and coordinators can make forms (and print them) for this department. Tap a name to add or remove.</p>
+    <div class="field"><input type="search" id="ld-search" placeholder="Search a name" autocomplete="off"></div>
+    <div id="ld-list"></div>
+    <div class="modal-actions"><button class="btn btn-outline btn-sm" id="mod-leaders-close">Close</button></div>
+  </div>
+</div>
 
 <!-- MENU, DETAILS, PASSWORD, INSTALL -->
 <div id="mod-menu" class="modal-bg hidden">
@@ -814,6 +827,8 @@ body {
     <button class="big-btn fill" id="el-share">📤 Share the form link</button>
     <button class="big-btn" id="el-wa">💬 Send on WhatsApp</button>
     <button class="big-btn" id="el-copy">📋 Copy the link</button>
+    <button class="big-btn" id="el-print">🖨 Printable form (PDF)</button>
+    <p class="dept-note">For elders without a smartphone: print it or save it as PDF, let them fill it by hand, then you type it in using the same link.</p>
 
     <div class="el-stats" id="el-stats"></div>
     <div class="field">
@@ -1348,7 +1363,21 @@ function renderDashboard(data) {
   document.getElementById('d-role').textContent = rName(data.role);
   document.getElementById('d-dist').textContent = dName(data.districtId);
   document.getElementById('btn-open-dir').classList.toggle('hidden', !(window.canSeeDirectory && window.canSeeDirectory(data.role)));
+  paintDeptForms(data);
 }
+// Directors and coordinators: a Forms tile for each department they lead
+async function paintDeptForms(data) {
+  const box = document.getElementById('d-deptforms'); if (!box) return;
+  const ids = Array.isArray(data.deptIds) ? data.deptIds : [];
+  if (!ids.length) { box.innerHTML = ''; return; }
+  let names = {};
+  try { const sn = await db.collection('departments').get(); sn.docs.forEach(d => { names[d.id] = (d.data() || {}).name || d.id; }); } catch (_) {}
+  box.innerHTML = ids.map(i => `<button class="tile" data-dforms="${esc(i)}" data-fname="${esc(names[i] || i)}"><span class="ic">📝</span><span>Forms · ${esc(names[i] || i)}<small>Make, share and print forms for this department</small></span></button>`).join('');
+}
+document.getElementById('d-deptforms').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-dforms]'); if (!b) return;
+  openForms(_dashData, { deptId: b.dataset.dforms, deptName: b.dataset.fname }, 'dashboard');
+});
 
 // ══════════════════════════════════════════════════════════
 // ADMIN SCREEN
@@ -1711,12 +1740,13 @@ function renderDepts() {
       } else {
         const acts = _acts.filter(a => a.deptId === d.id).sort((a, b) => (a.order || 99) - (b.order || 99) || String(a.name).localeCompare(String(b.name)));
         html += `<div class="dept-card"><h4>${DEPT_ICON[d.id] || '📁'} ${esc(d.name)}</h4>`;
-        if (MISSION_ROLES.includes(_adminData.role)) html += `<button class="tile" data-forms="${esc(d.id)}" data-fname="${esc(d.name)}"><span class="ic">📝</span><span>Forms<small>Make and share a form</small></span></button>`;
+        if (MISSION_ROLES.includes(_adminData.role) || (_adminData.deptIds || []).includes(d.id)) html += `<button class="tile" data-forms="${esc(d.id)}" data-fname="${esc(d.name)}"><span class="ic">📝</span><span>Forms<small>Make and share a form</small></span></button>`;
         if (!acts.length) html += '<p class="dept-note">No activities yet.</p>';
         acts.forEach(a => {
           html += `<button class="tile" data-act="${esc(a.id)}"><span class="ic">${a.key === 'visit_all' ? '🚶' : '📌'}</span><span>${esc(a.name)}<small>${a.key === 'visit_all' ? 'Visit reports, members, teams' : 'Open'}</small></span></button>`;
           if (isDeptAdmin() && !a.builtin) html += `<button class="big-btn" data-delact="${esc(a.id)}" style="min-height:40px;font-size:14px;margin-top:4px">🗑 Remove “${esc(a.name)}”</button>`;
         });
+        if (isDeptAdmin()) html += `<button class="big-btn" data-leaders="${esc(d.id)}" data-lname="${esc(d.name)}">👥 Directors and coordinators</button>`;
         if (isDeptAdmin()) html += `<button class="big-btn" data-addact="${esc(d.id)}">➕ Add an activity</button>`;
         if (isDeptAdmin() && !d.builtin) html += `<button class="big-btn" data-del="${esc(d.id)}" style="min-height:44px;font-size:15px">🗑 Remove department</button>`;
         html += '</div>';
@@ -1976,6 +2006,7 @@ document.getElementById('el-district').addEventListener('change', renderElders);
 // ── Share the form link ────────────────────────────────────
 const elderLink = () => new URL('elders.html', location.href).href;
 const elderMsg = () => 'Volta Ghana Mission: please fill in your Elder Biodata form on your phone.\n' + elderLink();
+document.getElementById('el-print').addEventListener('click', () => window.open(elderLink() + '?print=1', '_blank', 'noopener'));
 document.getElementById('el-copy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(elderLink()); toast('Link copied ✓', 'ok'); }
   catch (_) { window.prompt('Copy this link and send it to the elders:', elderLink()); }
@@ -2123,11 +2154,14 @@ function paintRecLinks() {
   box.innerHTML = `<p class="dept-note" style="margin-top:10px">Send this link to the ${w}. They fill it on their phone and it comes here.</p>
     <button class="big-btn fill" data-rl="share">📤 Share the form link</button>
     <button class="big-btn" data-rl="wa">💬 Send on WhatsApp</button>
-    <button class="big-btn" data-rl="copy">📋 Copy the link</button>`;
+    <button class="big-btn" data-rl="copy">📋 Copy the link</button>
+    <button class="big-btn" data-rl="print">🖨 Printable form (PDF)</button>
+    <p class="dept-note">For people without a smartphone: print it or save it as PDF, let them fill it by hand, then you type it in using the same link (tap <b>Fill for someone else</b>).</p>`;
 }
 document.getElementById('rc-links').addEventListener('click', async ev => {
   const b = ev.target.closest('[data-rl]'); if (!b) return;
   const url = recLink(_recCat), msg = `Volta Ghana Mission: please fill in your ${REC_WORD[_recCat]} biodata form on your phone.\n` + url;
+  if (b.dataset.rl === 'print') { window.open(url + (url.includes('?') ? '&' : '?') + 'print=1', '_blank', 'noopener'); return; }
   if (b.dataset.rl === 'wa') { window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener'); return; }
   if (b.dataset.rl === 'share' && navigator.share) { try { await navigator.share({ title: 'Biodata form', text: msg, url }); } catch (_) {} return; }
   try { await navigator.clipboard.writeText(url); toast('Link copied ✓', 'ok'); } catch (_) { window.prompt('Copy this link and send it:', url); }
@@ -2808,6 +2842,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
     const col = db.collection('forms');
     let query = col.where('ownerId', '==', me.uid);
     if (isMissionRole()) query = col;
+    else if (leads(ctx.deptId)) query = col.where('deptId', '==', ctx.deptId);
     else if (isPastorRole() && me.districtId) query = col.where('districtId', '==', me.districtId);
     const on = (qy, fallback) => qy.onSnapshot(sn => {
       forms = sn.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -2820,8 +2855,9 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
     subs.push(on(query, query !== undefined && isMissionRole()));
   }
 
+  const leads = id => !!id && me && Array.isArray(me.deptIds) && me.deptIds.includes(id);
   function myLevel() {
-    if (ctx.deptId && isMissionRole()) return 'department';
+    if (ctx.deptId && (isMissionRole() || leads(ctx.deptId))) return 'department';
     if (isMissionRole()) return 'mission';
     if (isLeadRole()) return 'district';
     return 'church';
@@ -2845,7 +2881,8 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
     if (!rows.length) h += `<div class="empty"><div class="e-icon">📝</div><h3>No forms yet</h3><p>Tap “Make a new form”, add your questions, then share the link.</p></div>`;
     h += rows.map(f => `<div class="el-row" role="button" tabindex="0" data-open="${e(f.id)}">
       <div class="n">${e(f.title)} ${f.status === 'closed' ? '<small>(closed)</small>' : ''}</div>
-      <div class="s">${e(LEVEL_TXT[f.level] || '')}${f.deptName ? ' · ' + e(f.deptName) : ''}${f.ownerName ? ' · ' + e(f.ownerName) : ''}</div></div>`).join('');
+      <div class="s">${e(LEVEL_TXT[f.level] || '')}${f.deptName ? ' · ' + e(f.deptName) : ''}${f.ownerName ? ' · ' + e(f.ownerName) : ''}</div></div>
+      <button class="btn btn-outline btn-sm" data-prt="${e(f.id)}" style="margin:0 0 10px 4px">🖨 Printable form (PDF)</button>`).join('');
     body.innerHTML = h;
   }
 
@@ -2894,7 +2931,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
 
   function parse(r) { try { return JSON.parse(r.answersJson) || {}; } catch (_) { return {}; } }
   const fmtAns = a => Array.isArray(a) ? a.join(', ') : (a == null ? '' : String(a));
-  const canManage = f => me && (f.ownerId === me.uid || isMissionRole() && me.role !== 'ministerial_secretary' || (isPastorRole() && f.districtId === me.districtId));
+  const canManage = f => me && (f.ownerId === me.uid || leads(f.deptId) || isMissionRole() && me.role !== 'ministerial_secretary' || (isPastorRole() && f.districtId === me.districtId));
 
   function renderResults(body) {
     const f = cur; if (!f) { view = 'list'; return render(); }
@@ -2903,7 +2940,8 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
       <p class="dept-note">${e(LEVEL_TXT[f.level] || '')}${f.deptName ? ' · ' + e(f.deptName) : ''} · ${f.status === 'open' ? '🟢 Open' : '🔴 Closed'}</p>
       <button class="big-btn fill" data-sh="share">📤 Share the form link</button>
       <button class="big-btn" data-sh="wa">💬 Send on WhatsApp</button>
-      <button class="big-btn" data-sh="copy">📋 Copy the link</button>`;
+      <button class="big-btn" data-sh="copy">📋 Copy the link</button>
+      <button class="big-btn" data-sh="print">🖨 Printable form (PDF)</button>`;
     if (canManage(f)) h += `<button class="big-btn" data-toggle>${f.status === 'open' ? '🔒 Stop taking answers' : '🔓 Open again'}</button>
       <button class="big-btn" data-copyas>🧬 Make a copy to change</button>`;
     h += `<div class="el-stats"><div class="el-stat"><b>${resp.length}</b><span>Answers</span></div></div>
@@ -2991,6 +3029,7 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
     const btn = sel => t.closest(sel);
     if (btn('#fm-new')) { draft = null; view = 'build'; render(); return; }
     if (btn('[data-tpl]')) { startDraft(TEMPLATES[+btn('[data-tpl]').dataset.tpl]); return; }
+    if (btn('[data-prt]')) { window.open(link(btn('[data-prt]').dataset.prt) + '&print=1', '_blank', 'noopener'); return; }
     if (btn('[data-open]')) { open(btn('[data-open]').dataset.open); return; }
     if (view === 'build' && draft) {
       if (btn('[data-add]')) { syncDraft(); const ty = btn('[data-add]').dataset.add; draft.fields.push({ id: qid(), label: '', type: ty, required: false, options: [] }); render(); window.scrollTo(0, document.body.scrollHeight); return; }
@@ -3002,7 +3041,8 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
       const sh = btn('[data-sh]');
       if (sh) {
         const url = link(cur.id), msg = `Volta Ghana Mission: please fill in this form on your phone: ${cur.title}\n${url}`;
-        if (sh.dataset.sh === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+        if (sh.dataset.sh === 'print') window.open(url + (url.includes('?') ? '&' : '?') + 'print=1', '_blank', 'noopener');
+        else if (sh.dataset.sh === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
         else if (sh.dataset.sh === 'share' && navigator.share) { try { await navigator.share({ title: cur.title, text: msg, url }); } catch (_) {} }
         else { try { await navigator.clipboard.writeText(url); toast('Link copied ✓', 'ok'); } catch (_) { window.prompt('Copy this link and send it:', url); } }
         return;
@@ -3324,6 +3364,42 @@ document.getElementById('mod-r-confirm').addEventListener('click', async () => {
   }
   let helpFrom = 'dashboard';
   $('help-back').addEventListener('click', () => show(helpFrom));
+})();
+
+// ══════════════════════════════════════════════════════════
+// DEPARTMENT LEADERS (directors and coordinators who may make forms for their department)
+// ══════════════════════════════════════════════════════════
+(function () {
+  const $ = id => document.getElementById(id);
+  let deptId = '', users = [];
+  function paint() {
+    const term = $('ld-search').value.trim().toLowerCase();
+    const list = users.filter(u => !term || [u.displayName, u.email, u.phone].some(x => String(x || '').toLowerCase().includes(term)))
+      .sort((a, b) => String(a.displayName || a.email || '').localeCompare(String(b.displayName || b.email || '')));
+    $('ld-list').innerHTML = list.map(u => {
+      const on = (u.deptIds || []).includes(deptId);
+      return `<div class="el-row" role="button" tabindex="0" data-uid="${esc(u.id)}"><div class="n">${on ? '✅' : '⬜'} ${esc(u.displayName || u.email || '—')}</div><div class="s">${esc(rName(u.role))} · ${esc(dName(u.districtId))}</div></div>`;
+    }).join('') || '<p class="dept-note">Nobody found.</p>';
+  }
+  document.addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-leaders]'); if (!b) return;
+    deptId = b.dataset.leaders; $('ld-title').textContent = 'Leaders · ' + b.dataset.lname; $('ld-search').value = '';
+    $('ld-list').innerHTML = '<p class="dept-note">Loading…</p>'; $('mod-leaders').classList.remove('hidden');
+    try { const sn = await db.collection('users').where('status', '==', 'approved').get(); users = sn.docs.map(d => ({ id: d.id, ...d.data() })); paint(); }
+    catch (e) { $('ld-list').innerHTML = '<p class="dept-note">Could not load: ' + esc(e.message) + '</p>'; }
+  });
+  $('ld-search').addEventListener('input', paint);
+  $('ld-list').addEventListener('click', async ev => {
+    const r = ev.target.closest('[data-uid]'); if (!r) return;
+    const u = users.find(x => x.id === r.dataset.uid); if (!u) return;
+    const on = (u.deptIds || []).includes(deptId), FV = firebase.firestore.FieldValue;
+    try {
+      await db.collection('users').doc(u.id).update({ deptIds: on ? FV.arrayRemove(deptId) : FV.arrayUnion(deptId) });
+      u.deptIds = on ? (u.deptIds || []).filter(x => x !== deptId) : (u.deptIds || []).concat(deptId);
+      paint(); toast(on ? 'Removed' : 'Added ✓', 'ok');
+    } catch (e) { toast('Not allowed (' + (e.code || e.message) + ')', 'err'); }
+  });
+  $('mod-leaders-close').addEventListener('click', () => $('mod-leaders').classList.add('hidden'));
 })();
 
 // ══════════════════════════════════════════════════════════

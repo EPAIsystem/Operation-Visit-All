@@ -518,6 +518,7 @@ $("#btnPrintDone").addEventListener("click", () => { form.style.display = ""; wi
 $("#btnAnother").addEventListener("click", () => location.reload());
 
 restoreDraft(); syncSpouse(); progress(); showRecent();
+if(new URLSearchParams(location.search).get("print")==="1") setTimeout(printBlank, 500);
 </script>
 
 </body></html>

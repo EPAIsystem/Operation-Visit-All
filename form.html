@@ -35,6 +35,20 @@ button[disabled]{opacity:.6}
 .big{text-align:center;padding:30px 10px}
 .foot{color:var(--muted);font-size:13px;margin-top:20px}
 .hide{display:none}
+@page{size:A4;margin:12mm}
+.print-only{display:none}
+button.alt{background:#fff;color:var(--blue)}
+@media print{
+  body{background:#fff;color:#000;font-size:11pt;padding:0}
+  header{background:#fff!important;color:#000!important;margin:0 0 8px;padding:0 0 6px;border-bottom:2px solid #000}
+  .noprint,button,.foot,.msg,#state,.e{display:none!important}
+  .card{border:0;padding:0}
+  .f{break-inside:avoid;margin-bottom:12px}
+  input[type=text],input[type=tel],input[type=number],input[type=date]{border:0!important;border-bottom:1px solid #000!important;border-radius:0!important;background:#fff!important;padding:3px 0!important;min-height:24px;-webkit-appearance:none;appearance:none}
+  textarea{border:1px solid #000!important;border-radius:0!important;min-height:80px;background-image:repeating-linear-gradient(transparent 0 21px,#000 21px 22px);line-height:22px}
+  .opt{border:0;min-height:0;padding:2px 10px 2px 0;display:flex}
+  .print-only{display:block!important;font-size:9pt;margin-top:14px}
+}
 </style>
 </head>
 <body>
@@ -42,10 +56,12 @@ button[disabled]{opacity:.6}
 <header><small>Seventh-day Adventist Church · Volta Ghana Mission</small><h1 id="title">Form</h1></header>
 <div id="state" class="card big">Loading…</div>
 <form id="f" class="hide" novalidate>
+  <button type="button" class="alt noprint" id="btnPrint">🖨 Print blank form (to save as PDF or fill by hand)</button>
   <div class="card"><p class="desc" id="desc"></p><div id="qs"></div></div>
   <div class="msg" id="msg" role="alert"></div>
   <button type="submit" id="btn">Send</button>
 </form>
+<p class="print-only">Return this form to the person who gave it to you. Keep a copy for yourself.</p>
 <p class="foot">Your answers go only to the church officers who asked for this form.</p>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -84,7 +100,9 @@ async function load() {
     return '<div class="f" data-q="' + esc(q.id) + '">' + lab + inp + '<span class="e">Please answer this.</span></div>';
   }).join("");
   $("#state").classList.add("hide"); $("#f").classList.remove("hide");
+  if (new URLSearchParams(location.search).get("print") === "1") setTimeout(() => window.print(), 600);
 }
+$("#btnPrint").addEventListener("click", () => { $("#f").reset(); setTimeout(() => window.print(), 80); });
 
 function answerOf(q) {
   const els = [...document.getElementsByName(q.id)];
